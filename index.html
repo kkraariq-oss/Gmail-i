@@ -2,1084 +2,1279 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#c71610">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gmail">
     <title>Gmail</title>
-    <link rel="icon" href="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico">
+    <link rel="apple-touch-icon" href="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase v9 -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, get, update, remove, onValue, push, child } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-        
-        // Firebase Configuration
-       const firebaseConfig = {
-            apiKey: "AIzaSyAR2O4-gyRWrGaiwXGc--Ynk0I3KLe21sw",
-            authDomain: "cashier-pro-bed2b.firebaseapp.com",
-            databaseURL: "https://cashier-pro-bed2b-default-rtdb.firebaseio.com",
-            projectId: "cashier-pro-bed2b",
-            storageBucket: "cashier-pro-bed2b.appspot.com",
-            messagingSenderId: "289864279537",
-            appId: "1:289864279537:web:46d5aed72ff2369d32d050",
-            measurementId: "G-5D0YEB59EY"
-        };
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        
-        // Make database available globally
-        window.firebaseDB = {
-            database,
-            ref,
-            set,
-            get,
-            update,
-            remove,
-            onValue,
-            push,
-            child
-        };
-        
-        console.log('✅ Firebase initialized successfully');
-    </script>
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #f5f5f5; overflow: hidden; position: fixed; width: 100%; height: 100%; }
+        .hidden { display: none !important; }
+        
+        /* Gmail Fake UI */
+        #fake-gmail { width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; }
+        .gmail-header { height: 56px; background: #c71610; display: flex; align-items: center; padding: 0 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .gmail-logo { width: 40px; height: 40px; cursor: pointer; user-select: none; transition: transform 0.2s; }
+        .gmail-logo:active { transform: scale(0.95); }
+        .gmail-search { flex: 1; margin: 0 16px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; padding: 0 12px; color: #fff; }
+        .gmail-search i { margin-left: 8px; font-size: 18px; }
+        .gmail-search input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 16px; }
+        .gmail-search input::placeholder { color: rgba(255,255,255,0.7); }
+        .gmail-content { flex: 1; overflow-y: auto; background: #f8f9fa; }
+        .gmail-email { background: #fff; margin-bottom: 1px; padding: 16px; display: flex; align-items: flex-start; cursor: pointer; transition: background 0.2s; }
+        .gmail-email:hover { background: #f8f9fa; }
+        .gmail-email-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-left: 12px; flex-shrink: 0; }
+        .gmail-email-content { flex: 1; min-width: 0; }
+        .gmail-email-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .gmail-email-sender { font-weight: 600; font-size: 14px; color: #202124; }
+        .gmail-email-time { font-size: 12px; color: #5f6368; }
+        .gmail-email-subject { font-size: 14px; color: #202124; margin-bottom: 4px; font-weight: 500; }
+        .gmail-email-preview { font-size: 13px; color: #5f6368; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        body {
-            background: #f0f2f5;
-            overflow: hidden;
-        }
+        /* Code Screen */
+        #code-screen { width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .code-container { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .code-container h2 { text-align: center; margin-bottom: 30px; color: #333; font-size: 24px; }
+        .code-container i.fa-lock { font-size: 64px; text-align: center; display: block; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .code-input { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 18px; text-align: center; margin-bottom: 20px; transition: all 0.3s; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; }
+        .code-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #f5f5f5; color: #333; margin-top: 10px; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .error-message { background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; }
+        .success-message { background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; }
 
-        .hidden {
-            display: none !important;
-        }
-
-        /* Loading Screen */
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255,255,255,0.3);
-            border-top: 5px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: white;
-            font-size: 18px;
-            margin-top: 20px;
-            font-weight: 500;
-        }
-
-        /* Gmail Screen */
-        #gmail-screen {
-            background: #fff;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .gmail-header {
-            background: linear-gradient(135deg, #c71610 0%, #d44638 100%);
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(199, 22, 16, 0.3);
-        }
-
-        .gmail-menu-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            margin-left: 15px;
-            padding: 8px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-        }
-
-        .gmail-menu-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .gmail-search {
-            flex: 1;
-            margin: 0 15px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .gmail-search input {
-            background: none;
-            border: none;
-            color: white;
-            width: 100%;
-            outline: none;
-            font-size: 15px;
-        }
-
-        .gmail-search input::placeholder {
-            color: rgba(255,255,255,0.9);
-        }
-
-        .gmail-profile-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: white;
-            color: #c71610;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .gmail-content {
-            flex: 1;
-            overflow-y: auto;
-            background: #f5f5f5;
-        }
-
-        .email-item {
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 16px 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            transition: background 0.2s;
-        }
-
-        .email-item:hover {
-            background: #f8f8f8;
-        }
-
-        .email-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #c71610, #d44638);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-left: 15px;
-        }
-
-        .email-info {
-            flex: 1;
-        }
-
-        .email-sender {
-            font-weight: 600;
-            color: #202124;
-            margin-bottom: 4px;
-        }
-
-        .email-subject {
-            color: #5f6368;
-            font-size: 14px;
-        }
-
-        /* Login Screen */
-        #login-screen {
-            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .login-logo {
-            font-size: 60px;
-            color: #128C7E;
-            margin-bottom: 20px;
-        }
-
-        .login-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #075E54;
-            margin-bottom: 10px;
-        }
-
-        .login-subtitle {
-            color: #667781;
-            margin-bottom: 30px;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e9edef;
-            border-radius: 10px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            text-align: center;
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
-
-        .login-input:focus {
-            outline: none;
-            border-color: #128C7E;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-        }
+        /* Admin Screen */
+        #admin-screen { width: 100%; height: 100%; background: #f5f7fa; display: flex; flex-direction: column; }
+        .admin-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .admin-header h2 { font-size: 24px; margin-bottom: 5px; }
+        .admin-tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; }
+        .admin-tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-weight: 600; color: #666; }
+        .admin-tab:hover { background: #f5f5f5; }
+        .admin-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .admin-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .admin-panel { display: none; }
+        .admin-panel.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .form-control { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 15px; transition: all 0.3s; }
+        .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .user-card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 15px; transition: all 0.3s; }
+        .user-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-2px); }
+        .user-card-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .user-card-info { flex: 1; }
+        .user-card-name { font-weight: 600; font-size: 16px; margin-bottom: 5px; }
+        .user-card-code { font-size: 13px; color: #666; font-family: monospace; background: #f5f5f5; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+        .user-card-actions { display: flex; gap: 8px; }
+        .btn-icon { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .btn-icon:hover { transform: scale(1.1); }
+        .btn-icon.btn-view { background: #e3f2fd; color: #1976d2; }
+        .btn-icon.btn-chat { background: #e8f5e9; color: #388e3c; }
+        .btn-icon.btn-block { background: #fff3e0; color: #f57c00; }
+        .btn-icon.btn-delete { background: #ffebee; color: #d32f2f; }
+        .qr-code-container { text-align: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
+        .qr-code-container canvas { max-width: 250px; margin: 20px auto; display: block; }
 
         /* Chat Screen */
-        #chat-screen {
-            height: 100vh;
-            display: flex;
-            background: #f0f2f5;
-        }
+        #chat-screen { width: 100%; height: 100%; background: #f5f7fa; display: flex; flex-direction: column; }
+        .chat-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .chat-header-left { display: flex; align-items: center; gap: 15px; }
+        .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
+        .chat-header-info h3 { font-size: 18px; margin-bottom: 2px; }
+        .chat-header-actions { display: flex; gap: 10px; }
+        .chat-header-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .stories-section { background: #fff; padding: 15px 10px; border-bottom: 1px solid #e0e0e0; overflow-x: auto; white-space: nowrap; }
+        .stories-container { display: inline-flex; gap: 15px; padding: 0 10px; }
+        .story-item { display: inline-flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.3s; }
+        .story-item:hover { transform: scale(1.05); }
+        .story-avatar-container { position: relative; width: 70px; height: 70px; }
+        .story-avatar-ring { width: 70px; height: 70px; border-radius: 50%; padding: 3px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); display: flex; align-items: center; justify-content: center; }
+        .story-avatar-ring.viewed { background: #e0e0e0; }
+        .story-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #fff; }
+        .story-add-icon { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; border-radius: 50%; background: #667eea; color: #fff; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; font-size: 12px; }
+        .story-name { margin-top: 8px; font-size: 12px; color: #333; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .contacts-list { flex: 1; overflow-y: auto; background: #fff; }
+        .contact-item { padding: 15px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f5f5f5; position: relative; }
+        .contact-item:hover { background: #f8f9fa; }
+        .contact-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; position: relative; }
+        .contact-online-indicator { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: #4caf50; border: 2px solid #fff; }
+        .contact-info { flex: 1; min-width: 0; }
+        .contact-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .contact-name { font-weight: 600; font-size: 16px; color: #333; }
+        .contact-time { font-size: 12px; color: #999; }
+        .contact-preview { font-size: 14px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
+        .unread-badge { min-width: 22px; height: 22px; border-radius: 11px; background: #667eea; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
 
-        .sidebar {
-            width: 400px;
-            background: white;
-            border-left: 1px solid #e9edef;
-            display: flex;
-            flex-direction: column;
-        }
+        /* Conversation Screen */
+        #conversation-screen { width: 100%; height: 100%; background: #f5f7fa; display: flex; flex-direction: column; }
+        .conversation-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .conversation-user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
+        .conversation-user-info { flex: 1; }
+        .conversation-user-name { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+        .conversation-user-status { font-size: 12px; opacity: 0.9; }
+        .conversation-actions { display: flex; gap: 8px; }
+        .conversation-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; background: linear-gradient(to bottom, #f5f7fa, #ffffff); }
+        .message { display: flex; margin-bottom: 15px; animation: messageSlide 0.3s ease; }
+        @keyframes messageSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.sent { justify-content: flex-end; }
+        .message-content { max-width: 70%; position: relative; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; }
+        .message.received .message-bubble { background: #fff; color: #333; border-bottom-right-radius: 4px; }
+        .message.sent .message-bubble { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-bottom-left-radius: 4px; }
+        .message-text { font-size: 15px; line-height: 1.5; word-wrap: break-word; }
+        .message-image { width: 100%; max-width: 300px; border-radius: 12px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .message-image img { width: 100%; border-radius: 12px; display: block; }
+        .image-loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .message-meta { display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-top: 5px; font-size: 11px; opacity: 0.8; }
+        .message.received .message-meta { justify-content: flex-start; color: #666; }
+        .message-status i { font-size: 14px; }
+        .status-read { color: #2196f3; }
+        .status-delivered { color: #4caf50; }
+        .deleted-message { font-style: italic; opacity: 0.6; display: flex; align-items: center; gap: 5px; }
+        .message-actions { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 8px; display: none; z-index: 100; margin-bottom: 10px; min-width: 180px; }
+        .message-bubble:hover .message-actions { display: block; }
+        .message-action-btn { width: 100%; padding: 10px 15px; border: none; background: transparent; text-align: right; cursor: pointer; font-size: 14px; color: #333; display: flex; align-items: center; gap: 10px; border-radius: 8px; transition: all 0.2s; }
+        .message-action-btn:hover { background: #f5f5f5; }
+        .message-action-btn.danger { color: #f44336; }
+        .input-area { background: #fff; padding: 12px 15px; border-top: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px; }
+        .input-actions { display: flex; gap: 8px; }
+        .input-btn { width: 36px; height: 36px; border-radius: 50%; background: transparent; border: none; color: #667eea; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; font-size: 20px; }
+        .input-btn:hover { background: #f5f5f5; }
+        .message-input-wrapper { flex: 1; position: relative; }
+        .message-input { width: 100%; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 24px; font-size: 15px; resize: none; max-height: 120px; transition: all 0.3s; }
+        .message-input:focus { outline: none; border-color: #667eea; }
+        .send-btn { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; font-size: 20px; }
+        .send-btn:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4); }
 
-        .sidebar-header {
-            background: #f0f2f5;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* Story Viewer */
+        #story-viewer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; }
+        .story-header { position: absolute; top: 0; left: 0; right: 0; padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 10; }
+        .story-progress-bars { display: flex; gap: 4px; margin-bottom: 15px; }
+        .story-progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+        .story-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.1s linear; }
+        .story-user-info { display: flex; align-items: center; gap: 10px; }
+        .story-user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+        .story-user-name { font-size: 15px; font-weight: 600; color: #fff; }
+        .story-time { font-size: 12px; color: rgba(255,255,255,0.8); }
+        .story-close-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .story-content { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+        .story-media { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .story-nav-areas { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; }
+        .story-nav-area { flex: 1; cursor: pointer; }
 
-        .sidebar-header h2 {
-            color: #111b21;
-            font-size: 20px;
-        }
+        /* Story Creator */
+        #story-creator { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; }
+        .creator-header { background: rgba(0,0,0,0.8); padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .creator-header h3 { color: #fff; font-size: 18px; }
+        .creator-close-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .creator-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .media-preview { max-width: 100%; max-height: 60vh; border-radius: 12px; margin-bottom: 20px; }
+        .creator-controls { background: rgba(0,0,0,0.8); padding: 20px; width: 100%; }
+        .visibility-options { display: flex; gap: 10px; margin-bottom: 15px; }
+        .visibility-btn { flex: 1; padding: 12px; border: 2px solid rgba(255,255,255,0.3); background: transparent; color: #fff; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .visibility-btn.active { background: rgba(255,255,255,0.2); border-color: #fff; }
+        .creator-actions { display: flex; gap: 10px; }
+        .creator-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .creator-btn-cancel { background: rgba(255,255,255,0.2); color: #fff; }
+        .creator-btn-post { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
 
-        .sidebar-actions {
-            display: flex;
-            gap: 15px;
-        }
+        /* Media Viewer */
+        #media-viewer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .media-viewer-header { position: absolute; top: 0; left: 0; right: 0; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+        .media-viewer-close { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .media-viewer-content { max-width: 90%; max-height: 90%; }
+        .media-viewer-content img, .media-viewer-content video { max-width: 100%; max-height: 90vh; border-radius: 8px; }
 
-        .sidebar-btn {
-            background: transparent;
-            border: none;
-            color: #54656f;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-        }
+        /* QR Scanner */
+        #qr-scanner { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; }
+        .scanner-header { background: rgba(0,0,0,0.8); padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .scanner-header h3 { color: #fff; font-size: 18px; }
+        .scanner-close-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .scanner-content { flex: 1; position: relative; }
+        #scanner-video { width: 100%; height: 100%; object-fit: cover; }
+        .scanner-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 250px; height: 250px; border: 3px solid #fff; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
 
-        .sidebar-btn:hover {
-            background: #e9edef;
-        }
-
-        .chats-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .chat-item {
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            border-bottom: 1px solid #e9edef;
-        }
-
-        .chat-item:hover {
-            background: #f5f6f6;
-        }
-
-        .chat-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #128C7E, #075E54);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-            margin-left: 15px;
-        }
-
-        .chat-info {
-            flex: 1;
-        }
-
-        .chat-name {
-            font-weight: 500;
-            color: #111b21;
-            margin-bottom: 4px;
-        }
-
-        .chat-last-message {
-            color: #667781;
-            font-size: 14px;
-        }
-
-        /* Chat Area */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #efeae2;
-        }
-
-        .chat-area-header {
-            background: #f0f2f5;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .chat-user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #efeae2;
-        }
-
-        .message {
-            margin-bottom: 12px;
-            display: flex;
-        }
-
-        .message.sent {
-            justify-content: flex-end;
-        }
-
-        .message.received {
-            justify-content: flex-start;
-        }
-
-        .message-bubble {
-            max-width: 65%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            word-wrap: break-word;
-        }
-
-        .message.sent .message-bubble {
-            background: #d9fdd3;
-        }
-
-        .message.received .message-bubble {
-            background: white;
-        }
-
-        .message-text {
-            color: #111b21;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .message-time {
-            font-size: 11px;
-            color: #667781;
-            margin-top: 4px;
-            text-align: left;
-        }
-
-        /* Input Area */
-        .input-area {
-            background: #f0f2f5;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .input-box {
-            flex: 1;
-            background: white;
-            border-radius: 25px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-box input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 15px;
-        }
-
-        .send-btn {
-            background: #128C7E;
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-        }
-
-        .send-btn:hover {
-            background: #075E54;
-        }
-
-        /* No Chat Selected */
-        .no-chat-selected {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .no-chat-icon {
-            font-size: 80px;
-            color: #d9d9d9;
-            margin-bottom: 20px;
-        }
-
-        .no-chat-title {
-            font-size: 32px;
-            color: #41525d;
-            margin-bottom: 15px;
-        }
-
-        .no-chat-subtitle {
-            font-size: 14px;
-            color: #667781;
-        }
-
-        /* Modal Styles */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #111b21;
-        }
-
-        .modal-close {
-            background: transparent;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #54656f;
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9edef;
-            border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 15px;
-        }
-
-        .modal-input:focus {
-            outline: none;
-            border-color: #128C7E;
-        }
-
-        .modal-btn {
-            background: #25d366;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-        .modal-btn:hover {
-            background: #1da851;
-        }
+        /* Voice Recording */
+        .voice-recording { display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: #fff; border-radius: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .recording-indicator { width: 12px; height: 12px; border-radius: 50%; background: #f44336; animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .recording-duration { font-size: 16px; font-weight: 600; color: #333; min-width: 60px; }
+        .cancel-recording-btn { width: 36px; height: 36px; border-radius: 50%; background: #ffebee; border: none; color: #f44336; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-            }
-            
-            .chat-area {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: 100;
-            }
+            .code-container { padding: 30px 20px; }
+            .message-content { max-width: 85%; }
         }
+
+        /* Utilities */
+        .text-center { text-align: center; }
+        .mt-20 { margin-top: 20px; }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">جاري التحميل...</div>
-    </div>
-
-    <!-- Gmail Screen -->
-    <div id="gmail-screen" class="hidden">
+    <!-- Fake Gmail -->
+    <div id="fake-gmail">
         <div class="gmail-header">
-            <button class="gmail-menu-btn" onclick="app.showLoginScreen()">
-                <i class="fas fa-bars"></i>
-            </button>
+            <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" alt="Gmail" class="gmail-logo" id="gmailLogo">
             <div class="gmail-search">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="البحث في البريد">
+                <input type="text" placeholder="بحث في البريد">
             </div>
-            <div class="gmail-profile-icon" onclick="app.showChatScreen()">
-                <span id="gmail-profile-letter">G</span>
-            </div>
+            <button class="chat-header-btn"><i class="fas fa-ellipsis-v"></i></button>
         </div>
-        <div class="gmail-content" id="gmail-emails"></div>
+        <div class="gmail-content" id="gmailEmails"></div>
     </div>
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="hidden">
-        <div class="login-container">
-            <div class="login-logo">
-                <i class="fas fa-comments"></i>
+    <!-- Code Screen -->
+    <div id="code-screen" class="hidden">
+        <div class="code-container">
+            <i class="fas fa-lock"></i>
+            <h2>أدخل الكود السري</h2>
+            <input type="text" class="code-input" id="codeInput" placeholder="XXXXX" maxlength="5">
+            <button class="btn btn-primary" onclick="verifyCode()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+            <button class="btn btn-secondary" onclick="showQRScanner()"><i class="fas fa-qrcode"></i> مسح QR Code</button>
+            <div id="codeError" class="error-message hidden"></div>
+        </div>
+    </div>
+
+    <!-- Admin Screen -->
+    <div id="admin-screen" class="hidden">
+        <div class="admin-header">
+            <h2><i class="fas fa-shield-alt"></i> لوحة التحكم</h2>
+            <p>إدارة المستخدمين والمحادثات</p>
+        </div>
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchAdminTab('create')"><i class="fas fa-user-plus"></i> إنشاء مستخدم</div>
+            <div class="admin-tab" onclick="switchAdminTab('users')"><i class="fas fa-users"></i> المستخدمين</div>
+            <div class="admin-tab" onclick="switchAdminTab('chats')"><i class="fas fa-comments"></i> المحادثات</div>
+            <div class="admin-tab" onclick="switchAdminTab('settings')"><i class="fas fa-cog"></i> الإعدادات</div>
+        </div>
+        <div class="admin-content">
+            <!-- Create User Panel -->
+            <div id="createPanel" class="admin-panel active">
+                <form onsubmit="createUser(event)">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> اسم المستخدم</label>
+                        <input type="text" class="form-control" id="userName" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-image"></i> رابط الصورة</label>
+                        <input type="url" class="form-control" id="userAvatar" placeholder="https://example.com/avatar.jpg" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle"></i> إنشاء مستخدم</button>
+                </form>
+                <div id="createMessage"></div>
+                <div id="qrCodeDisplay" class="qr-code-container hidden">
+                    <h3>QR Code للمستخدم</h3>
+                    <canvas id="qrCanvas"></canvas>
+                    <p class="user-card-code" id="generatedCode"></p>
+                </div>
             </div>
-            <h1 class="login-title">مرحباً بك!</h1>
-            <p class="login-subtitle">أدخل الكود الخاص بك للدخول</p>
-            <input type="text" class="login-input" id="user-code-input" placeholder="أدخل الكود" maxlength="8">
-            <button class="login-btn" onclick="app.loginUser()">دخول</button>
+            <div id="usersPanel" class="admin-panel"><div id="usersList"></div></div>
+            <div id="chatsPanel" class="admin-panel"><div id="chatsList"></div></div>
+            <div id="settingsPanel" class="admin-panel">
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> تغيير كود الأدمن</label>
+                    <input type="text" class="form-control" id="newAdminCode" placeholder="كود جديد">
+                </div>
+                <button class="btn btn-primary" onclick="changeAdminCode()"><i class="fas fa-save"></i> حفظ الكود الجديد</button>
+                <div class="mt-20">
+                    <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Chat Screen -->
     <div id="chat-screen" class="hidden">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>الرسائل</h2>
-                <div class="sidebar-actions">
-                    <button class="sidebar-btn" onclick="app.showSearchModal()" title="إضافة صديق">
-                        <i class="fas fa-user-plus"></i>
-                    </button>
-                    <button class="sidebar-btn" onclick="app.showGmailScreen()" title="واجهة Gmail">
-                        <i class="fas fa-envelope"></i>
-                    </button>
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <img id="currentUserAvatar" class="chat-header-avatar" src="" alt="User">
+                <div class="chat-header-info">
+                    <h3 id="currentUserName"></h3>
+                    <p>متصل الآن</p>
                 </div>
             </div>
-            <div class="chats-list" id="chats-list"></div>
+            <div class="chat-header-actions">
+                <button class="chat-header-btn" onclick="showSettings()"><i class="fas fa-cog"></i></button>
+                <button class="chat-header-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
-
-        <div class="no-chat-selected" id="no-chat-selected">
-            <div class="no-chat-icon">
-                <i class="fas fa-comments"></i>
-            </div>
-            <h2 class="no-chat-title">تطبيق المحادثات</h2>
-            <p class="no-chat-subtitle">
-                ابدأ محادثة جديدة مع أصدقائك
-            </p>
+        <div class="stories-section">
+            <div class="stories-container" id="storiesContainer"></div>
         </div>
+        <div class="contacts-list" id="contactsList"></div>
+    </div>
 
-        <div class="chat-area hidden" id="chat-area">
-            <div class="chat-area-header">
-                <div class="chat-user-info">
-                    <div class="chat-avatar" id="current-chat-avatar"></div>
-                    <div>
-                        <div class="chat-name" id="current-chat-name"></div>
-                    </div>
-                </div>
+    <!-- Conversation Screen -->
+    <div id="conversation-screen" class="hidden">
+        <div class="conversation-header">
+            <button class="back-btn" onclick="backToContacts()"><i class="fas fa-arrow-right"></i></button>
+            <img id="conversationUserAvatar" class="conversation-user-avatar" src="" alt="User">
+            <div class="conversation-user-info">
+                <div class="conversation-user-name" id="conversationUserName"></div>
+                <div class="conversation-user-status" id="conversationUserStatus">متصل الآن</div>
             </div>
-
-            <div class="messages-container" id="messages-container"></div>
-
-            <div class="input-area">
-                <div class="input-box">
-                    <input type="text" id="message-input" placeholder="اكتب رسالة">
-                </div>
-                <button class="send-btn" onclick="app.sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+            <div class="conversation-actions">
+                <button class="conversation-btn" onclick="openMediaViewer()"><i class="fas fa-images"></i></button>
+                <button class="conversation-btn" onclick="showConversationMenu()"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+        </div>
+        <div class="messages-container" id="messagesContainer"></div>
+        <div class="input-area" id="inputArea">
+            <div class="input-actions">
+                <button class="input-btn" onclick="selectImage()"><i class="fas fa-image"></i></button>
+                <button class="input-btn" onclick="startVoiceRecording()"><i class="fas fa-microphone"></i></button>
+            </div>
+            <div class="message-input-wrapper">
+                <textarea class="message-input" id="messageInput" placeholder="اكتب رسالة..." rows="1"></textarea>
+            </div>
+            <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <div class="input-area hidden" id="voiceRecordingArea">
+            <div class="voice-recording">
+                <div class="recording-indicator"></div>
+                <div class="recording-duration" id="recordingDuration">0:00</div>
+                <button class="cancel-recording-btn" onclick="cancelVoiceRecording()"><i class="fas fa-times"></i></button>
             </div>
         </div>
     </div>
 
+    <!-- Story Viewer -->
+    <div id="story-viewer" class="hidden">
+        <div class="story-header">
+            <div class="story-progress-bars" id="storyProgressBars"></div>
+            <div class="story-user-info">
+                <img id="storyUserAvatar" class="story-user-avatar" src="" alt="User">
+                <div class="story-user-details">
+                    <div class="story-user-name" id="storyUserName"></div>
+                    <div class="story-time" id="storyTime"></div>
+                </div>
+                <button class="story-close-btn" onclick="closeStoryViewer()"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="story-content" id="storyContent"></div>
+        <div class="story-nav-areas">
+            <div class="story-nav-area" onclick="previousStory()"></div>
+            <div class="story-nav-area" onclick="nextStory()"></div>
+        </div>
+    </div>
+
+    <!-- Story Creator -->
+    <div id="story-creator" class="hidden">
+        <div class="creator-header">
+            <h3><i class="fas fa-plus-circle"></i> إضافة ستوري</h3>
+            <button class="creator-close-btn" onclick="closeStoryCreator()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="creator-content" id="creatorContent">
+            <button class="btn btn-primary" onclick="selectStoryMedia()"><i class="fas fa-image"></i> اختر صورة أو فيديو</button>
+        </div>
+        <div class="creator-controls hidden" id="creatorControls">
+            <div class="visibility-options">
+                <button class="visibility-btn active" id="publicBtn" onclick="setStoryVisibility('public')"><i class="fas fa-globe"></i> عام</button>
+                <button class="visibility-btn" id="privateBtn" onclick="setStoryVisibility('private')"><i class="fas fa-user-friends"></i> أصدقاء مقربون</button>
+            </div>
+            <div class="creator-actions">
+                <button class="creator-btn creator-btn-cancel" onclick="closeStoryCreator()">إلغاء</button>
+                <button class="creator-btn creator-btn-post" onclick="postStory()"><i class="fas fa-share"></i> نشر</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Viewer -->
+    <div id="media-viewer" class="hidden">
+        <div class="media-viewer-header">
+            <button class="media-viewer-close" onclick="closeMediaViewer()"><i class="fas fa-times"></i></button>
+            <button class="media-viewer-close" onclick="downloadMedia()"><i class="fas fa-download"></i></button>
+        </div>
+        <div class="media-viewer-content" id="mediaViewerContent"></div>
+    </div>
+
+    <!-- QR Scanner -->
+    <div id="qr-scanner" class="hidden">
+        <div class="scanner-header">
+            <h3><i class="fas fa-qrcode"></i> مسح QR Code</h3>
+            <button class="scanner-close-btn" onclick="closeQRScanner()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="scanner-content">
+            <video id="scanner-video" autoplay playsinline></video>
+            <div class="scanner-overlay"></div>
+        </div>
+    </div>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+    <input type="file" id="storyInput" accept="image/*,video/*" style="display: none;" onchange="handleStorySelect(event)">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <script>
-        // Main Application
-        const app = {
-            currentUser: null,
-            currentChatUser: null,
-            db: null,
-
-            // Initialize
-            init() {
-                console.log('🚀 Initializing app...');
-                
-                // Wait for Firebase to load
-                const checkFirebase = setInterval(() => {
-                    if (window.firebaseDB) {
-                        clearInterval(checkFirebase);
-                        this.db = window.firebaseDB;
-                        console.log('✅ Firebase connected');
-                        this.startApp();
-                    }
-                }, 100);
-
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    if (!this.db) {
-                        clearInterval(checkFirebase);
-                        console.error('❌ Firebase failed to load');
-                        alert('خطأ في الاتصال بالخادم. الرجاء التحقق من إعدادات Firebase.');
-                        this.hideLoading();
-                        this.showLoginScreen();
-                    }
-                }, 5000);
-            },
-
-            startApp() {
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    this.currentUser = JSON.parse(savedUser);
-                    this.showGmailScreen();
-                } else {
-                    this.showLoginScreen();
-                }
-                this.hideLoading();
-            },
-
-            hideLoading() {
-                document.getElementById('loading-screen').classList.add('hidden');
-            },
-
-            // Login
-            async loginUser() {
-                const codeInput = document.getElementById('user-code-input');
-                const code = codeInput.value.trim().toUpperCase();
-
-                if (code.length < 4) {
-                    alert('الكود يجب أن يكون 4 أحرف على الأقل');
-                    return;
-                }
-
-                try {
-                    const userRef = this.db.ref(this.db.database, 'users/' + code);
-                    const snapshot = await this.db.get(userRef);
-
-                    if (snapshot.exists()) {
-                        this.currentUser = snapshot.val();
-                        this.currentUser.code = code;
-                    } else {
-                        // Create new user
-                        this.currentUser = {
-                            name: 'مستخدم ' + code,
-                            code: code,
-                            createdAt: Date.now(),
-                            friends: {},
-                            friendRequests: {}
-                        };
-                        await this.db.set(userRef, this.currentUser);
-                        alert('تم إنشاء حساب جديد بنجاح! 🎉');
-                    }
-
-                    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-                    this.showGmailScreen();
-                } catch (error) {
-                    console.error('Login error:', error);
-                    alert('حدث خطأ: ' + error.message);
-                }
-            },
-
-            // Screen Navigation
-            showLoginScreen() {
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('gmail-screen').classList.add('hidden');
-                document.getElementById('chat-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-            },
-
-            showGmailScreen() {
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('chat-screen').classList.add('hidden');
-                document.getElementById('gmail-screen').classList.remove('hidden');
-                
-                if (this.currentUser) {
-                    document.getElementById('gmail-profile-letter').textContent = 
-                        this.currentUser.name.charAt(0);
-                    this.loadFakeEmails();
-                }
-            },
-
-            showChatScreen() {
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('gmail-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('chat-screen').classList.remove('hidden');
-                this.loadChats();
-            },
-
-            // Load Fake Emails
-            loadFakeEmails() {
-                const emails = [
-                    { sender: 'Facebook', subject: 'لديك إشعار جديد', time: 'قبل ساعة' },
-                    { sender: 'Instagram', subject: 'متابع جديد', time: 'قبل ساعتين' },
-                    { sender: 'YouTube', subject: 'فيديو جديد', time: 'قبل 3 ساعات' },
-                    { sender: 'Twitter', subject: 'إشعار', time: 'أمس' }
-                ];
-
-                const container = document.getElementById('gmail-emails');
-                container.innerHTML = '';
-
-                emails.forEach(email => {
-                    const div = document.createElement('div');
-                    div.className = 'email-item';
-                    div.innerHTML = `
-                        <div class="email-avatar">${email.sender.charAt(0)}</div>
-                        <div class="email-info">
-                            <div class="email-sender">${email.sender}</div>
-                            <div class="email-subject">${email.subject} - ${email.time}</div>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            },
-
-            // Load Chats
-            async loadChats() {
-                const chatsList = document.getElementById('chats-list');
-                chatsList.innerHTML = '';
-
-                if (!this.currentUser || !this.currentUser.friends) {
-                    chatsList.innerHTML = `
-                        <div style="padding: 40px; text-align: center; color: #667781;">
-                            <i class="fas fa-user-friends" style="font-size: 50px; margin-bottom: 15px;"></i>
-                            <h3>لا يوجد أصدقاء بعد</h3>
-                            <p>ابحث عن أصدقاء باستخدام زر الإضافة</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const friends = Object.keys(this.currentUser.friends);
-                for (const friendCode of friends) {
-                    try {
-                        const friendRef = this.db.ref(this.db.database, 'users/' + friendCode);
-                        const snapshot = await this.db.get(friendRef);
-                        
-                        if (snapshot.exists()) {
-                            const friend = snapshot.val();
-                            const chatDiv = document.createElement('div');
-                            chatDiv.className = 'chat-item';
-                            chatDiv.innerHTML = `
-                                <div class="chat-avatar">${friend.name.charAt(0)}</div>
-                                <div class="chat-info">
-                                    <div class="chat-name">${friend.name}</div>
-                                    <div class="chat-last-message">انقر لبدء المحادثة</div>
-                                </div>
-                            `;
-                            chatDiv.onclick = () => this.openChat(friend);
-                            chatsList.appendChild(chatDiv);
-                        }
-                    } catch (error) {
-                        console.error('Error loading friend:', error);
-                    }
-                }
-            },
-
-            // Open Chat
-            openChat(friend) {
-                this.currentChatUser = friend;
-                document.getElementById('no-chat-selected').classList.add('hidden');
-                document.getElementById('chat-area').classList.remove('hidden');
-                
-                document.getElementById('current-chat-name').textContent = friend.name;
-                document.getElementById('current-chat-avatar').textContent = friend.name.charAt(0);
-                
-                this.loadMessages(friend.code);
-            },
-
-            // Load Messages
-            async loadMessages(friendCode) {
-                const container = document.getElementById('messages-container');
-                container.innerHTML = '';
-
-                const chatId = [this.currentUser.code, friendCode].sort().join('_');
-                const messagesRef = this.db.ref(this.db.database, 'chats/' + chatId + '/messages');
-                
-                this.db.onValue(messagesRef, (snapshot) => {
-                    container.innerHTML = '';
-                    
-                    if (snapshot.exists()) {
-                        const messages = snapshot.val();
-                        Object.keys(messages).forEach(messageId => {
-                            const message = messages[messageId];
-                            this.displayMessage(message);
-                        });
-                    }
-                    
-                    container.scrollTop = container.scrollHeight;
-                });
-            },
-
-            // Display Message
-            displayMessage(message) {
-                const container = document.getElementById('messages-container');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message ' + 
-                    (message.senderId === this.currentUser.code ? 'sent' : 'received');
-                
-                messageDiv.innerHTML = `
-                    <div class="message-bubble">
-                        <div class="message-text">${message.text}</div>
-                        <div class="message-time">${this.formatTime(message.timestamp)}</div>
-                    </div>
-                `;
-                
-                container.appendChild(messageDiv);
-            },
-
-            // Send Message
-            async sendMessage() {
-                const input = document.getElementById('message-input');
-                const text = input.value.trim();
-
-                if (!text || !this.currentChatUser) return;
-
-                try {
-                    const chatId = [this.currentUser.code, this.currentChatUser.code].sort().join('_');
-                    const messageId = 'msg_' + Date.now();
-                    
-                    const message = {
-                        id: messageId,
-                        senderId: this.currentUser.code,
-                        receiverId: this.currentChatUser.code,
-                        type: 'text',
-                        text: text,
-                        timestamp: Date.now()
-                    };
-
-                    const messageRef = this.db.ref(
-                        this.db.database, 
-                        'chats/' + chatId + '/messages/' + messageId
-                    );
-                    
-                    await this.db.set(messageRef, message);
-                    input.value = '';
-                } catch (error) {
-                    console.error('Send message error:', error);
-                    alert('حدث خطأ في الإرسال');
-                }
-            },
-
-            // Show Search Modal
-            showSearchModal() {
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">إضافة صديق</div>
-                            <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
-                        </div>
-                        <input type="text" class="modal-input" id="search-code-input" placeholder="أدخل كود الصديق">
-                        <button class="modal-btn" onclick="app.searchUser()">بحث</button>
-                        <div id="search-result" style="margin-top: 20px;"></div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            },
-
-            // Search User
-            async searchUser() {
-                const code = document.getElementById('search-code-input').value.trim().toUpperCase();
-                const resultDiv = document.getElementById('search-result');
-
-                if (!code) {
-                    alert('الرجاء إدخال الكود');
-                    return;
-                }
-
-                if (code === this.currentUser.code) {
-                    alert('لا يمكنك إضافة نفسك!');
-                    return;
-                }
-
-                try {
-                    const userRef = this.db.ref(this.db.database, 'users/' + code);
-                    const snapshot = await this.db.get(userRef);
-
-                    if (snapshot.exists()) {
-                        const user = snapshot.val();
-                        const isFriend = this.currentUser.friends && this.currentUser.friends[code];
-
-                        resultDiv.innerHTML = `
-                            <div style="text-align: center; padding: 20px; background: #f0f2f5; border-radius: 8px;">
-                                <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
-                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">${user.name}</div>
-                                <div style="color: #667781; margin-bottom: 15px;">الكود: ${code}</div>
-                                ${isFriend ? 
-                                    '<button class="modal-btn" disabled>أنت أصدقاء بالفعل</button>' :
-                                    '<button class="modal-btn" onclick="app.addFriend(\'' + code + '\')">إرسال طلب صداقة</button>'
-                                }
-                            </div>
-                        `;
-                    } else {
-                        alert('المستخدم غير موجود');
-                    }
-                } catch (error) {
-                    console.error('Search error:', error);
-                    alert('حدث خطأ في البحث');
-                }
-            },
-
-            // Add Friend
-            async addFriend(friendCode) {
-                try {
-                    // Add to current user's friends
-                    const userFriendRef = this.db.ref(
-                        this.db.database,
-                        'users/' + this.currentUser.code + '/friends/' + friendCode
-                    );
-                    await this.db.set(userFriendRef, true);
-
-                    // Add to friend's friends
-                    const friendUserRef = this.db.ref(
-                        this.db.database,
-                        'users/' + friendCode + '/friends/' + this.currentUser.code
-                    );
-                    await this.db.set(friendUserRef, true);
-
-                    // Update local user
-                    if (!this.currentUser.friends) this.currentUser.friends = {};
-                    this.currentUser.friends[friendCode] = true;
-                    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-
-                    alert('تم إضافة الصديق بنجاح! 🎉');
-                    document.querySelector('.modal').remove();
-                    this.loadChats();
-                } catch (error) {
-                    console.error('Add friend error:', error);
-                    alert('حدث خطأ في الإضافة');
-                }
-            },
-
-            // Format Time
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            }
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
+            authDomain: "messageemeapp.firebaseapp.com",
+            databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
+            projectId: "messageemeapp",
+            storageBucket: "messageemeapp.appspot.com",
+            messagingSenderId: "255034474844",
+            appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
         };
 
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => app.init());
-        } else {
-            app.init();
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        const ADMIN_CODE = 'ADMIN';
+        const CLICK_THRESHOLD = 5;
+        const CLICK_TIMEOUT = 3000;
+
+        let clickCount = 0;
+        let clickTimer = null;
+        let currentUser = null;
+        let currentChatId = null;
+        let storyVisibility = 'public';
+        let selectedStoryFile = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let recordingStartTime = null;
+        let recordingInterval = null;
+        let currentStoryIndex = 0;
+        let currentUserStories = [];
+
+        // Init
+        initApp();
+
+        function initApp() {
+            showFakeGmail();
+            generateFakeEmails();
+            setupGmailLogoClick();
+            updateEmailTimes();
+            setInterval(updateEmailTimes, 60000);
         }
 
-        // Handle Enter key for message input
-        document.addEventListener('DOMContentLoaded', () => {
-            const messageInput = document.getElementById('message-input');
-            if (messageInput) {
-                messageInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        app.sendMessage();
-                    }
+        // Gmail Fake
+        function showFakeGmail() {
+            document.getElementById('fake-gmail').classList.remove('hidden');
+            ['code-screen', 'admin-screen', 'chat-screen', 'conversation-screen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        function generateFakeEmails() {
+            const emails = [
+                { sender: 'Google', avatar: 'G', subject: 'تنبيه أمني', preview: 'تم تسجيل دخول جديد إلى حسابك', time: Date.now() - 2*3600000 },
+                { sender: 'Facebook', avatar: 'F', subject: 'إشعار جديد', preview: 'لديك 5 إشعارات جديدة', time: Date.now() - 5*3600000 },
+                { sender: 'Amazon', avatar: 'A', subject: 'طلبك في الطريق', preview: 'طلبك #123456 خرج للتوصيل', time: Date.now() - 86400000 },
+                { sender: 'Netflix', avatar: 'N', subject: 'عروض جديدة', preview: 'شاهد أحدث الأفلام والمسلسلات', time: Date.now() - 2*86400000 },
+                { sender: 'LinkedIn', avatar: 'L', subject: '10 زيارات لملفك', preview: 'عرض من شاهد ملفك الشخصي', time: Date.now() - 3*86400000 },
+                { sender: 'Twitter', avatar: 'T', subject: 'أهم التغريدات', preview: 'لا تفوت التغريدات الرائجة', time: Date.now() - 4*86400000 },
+                { sender: 'PayPal', avatar: 'P', subject: 'تأكيد الدفع', preview: 'تم إرسال دفعة بمبلغ $50.00', time: Date.now() - 5*86400000 },
+                { sender: 'Spotify', avatar: 'S', subject: 'قائمة تشغيل جديدة', preview: 'اكتشف أغاني جديدة', time: Date.now() - 6*86400000 }
+            ];
+            document.getElementById('gmailEmails').innerHTML = emails.map(e => `
+                <div class="gmail-email">
+                    <div class="gmail-email-avatar">${e.avatar}</div>
+                    <div class="gmail-email-content">
+                        <div class="gmail-email-header">
+                            <span class="gmail-email-sender">${e.sender}</span>
+                            <span class="gmail-email-time" data-timestamp="${e.time}">${formatEmailTime(new Date(e.time))}</span>
+                        </div>
+                        <div class="gmail-email-subject">${e.subject}</div>
+                        <div class="gmail-email-preview">${e.preview}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatEmailTime(date) {
+            const diff = Date.now() - date;
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            if (hours < 1) return `منذ ${Math.floor(diff / 60000)} دقيقة`;
+            if (hours < 24) return `منذ ${hours} ساعة`;
+            if (days === 1) return 'أمس';
+            if (days < 7) return `منذ ${days} أيام`;
+            return `منذ ${Math.floor(days / 7)} أسابيع`;
+        }
+
+        function updateEmailTimes() {
+            document.querySelectorAll('.gmail-email-time[data-timestamp]').forEach(el => {
+                const ts = parseInt(el.getAttribute('data-timestamp'));
+                el.textContent = formatEmailTime(new Date(ts));
+            });
+        }
+
+        function setupGmailLogoClick() {
+            document.getElementById('gmailLogo').addEventListener('click', () => {
+                clickCount++;
+                if (clickTimer) clearTimeout(clickTimer);
+                if (clickCount >= CLICK_THRESHOLD) {
+                    showCodeScreen();
+                    clickCount = 0;
+                } else {
+                    clickTimer = setTimeout(() => clickCount = 0, CLICK_TIMEOUT);
+                }
+            });
+        }
+
+        // Code Screen
+        function showCodeScreen() {
+            document.getElementById('fake-gmail').classList.add('hidden');
+            document.getElementById('code-screen').classList.remove('hidden');
+            document.getElementById('codeInput').focus();
+        }
+
+        function verifyCode() {
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
+            const errorDiv = document.getElementById('codeError');
+            if (!code) {
+                errorDiv.textContent = 'الرجاء إدخال الكود';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            if (code === ADMIN_CODE) {
+                currentUser = { isAdmin: true, code: ADMIN_CODE, name: 'Admin', avatar: 'https://ui-avatars.com/api/?name=Admin&background=667eea&color=fff' };
+                showAdminScreen();
+            } else {
+                database.ref('users').orderByChild('code').equalTo(code).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const userId = Object.keys(snapshot.val())[0];
+                            const userData = snapshot.val()[userId];
+                            currentUser = { ...userData, id: userId };
+                            showChatScreen();
+                        } else {
+                            errorDiv.textContent = 'الكود غير صحيح';
+                            errorDiv.classList.remove('hidden');
+                        }
+                    });
+            }
+        }
+
+        // QR Scanner
+        function showQRScanner() {
+            document.getElementById('qr-scanner').classList.remove('hidden');
+            const video = document.getElementById('scanner-video');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    video.srcObject = stream;
+                    // في تطبيق حقيقي، استخدم مكتبة jsQR لمسح الرمز
+                })
+                .catch(() => {
+                    alert('لا يمكن الوصول إلى الكاميرا');
+                    closeQRScanner();
+                });
+        }
+
+        function closeQRScanner() {
+            const video = document.getElementById('scanner-video');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('qr-scanner').classList.add('hidden');
+        }
+
+        // Admin Functions
+        function showAdminScreen() {
+            document.getElementById('code-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.remove('hidden');
+            loadUsers();
+        }
+
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+            event.target.closest('.admin-tab').classList.add('active');
+            document.getElementById(tab + 'Panel').classList.add('active');
+            if (tab === 'users') loadUsers();
+            if (tab === 'chats') loadChats();
+        }
+
+        function generateUserCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            return Array(5).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+        }
+
+        function createUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('userName').value.trim();
+            const avatar = document.getElementById('userAvatar').value.trim();
+            const code = generateUserCode();
+            database.ref('users').push({ name, avatar, code, createdAt: Date.now(), isAdmin: false })
+                .then(() => {
+                    document.getElementById('createMessage').innerHTML = '<div class="success-message">تم إنشاء المستخدم بنجاح!</div>';
+                    generateQRCode(code);
+                    document.getElementById('userName').value = '';
+                    document.getElementById('userAvatar').value = '';
+                    loadUsers();
+                });
+        }
+
+        function generateQRCode(code) {
+            const qrDisplay = document.getElementById('qrCodeDisplay');
+            const canvas = document.getElementById('qrCanvas');
+            qrDisplay.classList.remove('hidden');
+            document.getElementById('generatedCode').textContent = code;
+            canvas.width = 250;
+            canvas.height = 250;
+            new QRCode(canvas, { text: code, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.H });
+        }
+
+        function loadUsers() {
+            database.ref('users').once('value').then(snapshot => {
+                const usersList = document.getElementById('usersList');
+                if (!snapshot.exists()) {
+                    usersList.innerHTML = '<p class="text-center">لا يوجد مستخدمون</p>';
+                    return;
+                }
+                const users = [];
+                snapshot.forEach(child => {
+                    if (!child.val().isAdmin) users.push({ id: child.key, ...child.val() });
+                });
+                usersList.innerHTML = users.map(u => `
+                    <div class="user-card">
+                        <img src="${u.avatar}" class="user-card-avatar" alt="${u.name}">
+                        <div class="user-card-info">
+                            <div class="user-card-name">${u.name}</div>
+                            <div class="user-card-code">${u.code}</div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button class="btn-icon btn-view" onclick="viewUserQR('${u.code}')" title="عرض QR"><i class="fas fa-qrcode"></i></button>
+                            <button class="btn-icon btn-chat" onclick="adminChatWithUser('${u.id}')" title="الدردشة"><i class="fas fa-comments"></i></button>
+                            <button class="btn-icon btn-block" onclick="blockUser('${u.id}')" title="تقييد"><i class="fas fa-ban"></i></button>
+                            <button class="btn-icon btn-delete" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        function viewUserQR(code) {
+            generateQRCode(code);
+            switchAdminTab('create');
+        }
+
+        function adminChatWithUser(userId) {
+            database.ref('users/' + userId).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                currentUser.tempChatWith = { id: userId, ...userData };
+                openConversation(userId, userData);
+            });
+        }
+
+        function blockUser(userId) {
+            if (confirm('هل تريد تقييد هذا المستخدم؟')) {
+                database.ref('users/' + userId + '/blocked').set(true).then(() => {
+                    alert('تم تقييد المستخدم');
+                    loadUsers();
                 });
             }
+        }
+
+        function deleteUser(userId) {
+            if (confirm('هل تريد حذف هذا المستخدم نهائياً؟')) {
+                database.ref('users/' + userId).remove().then(() => {
+                    alert('تم حذف المستخدم');
+                    loadUsers();
+                });
+            }
+        }
+
+        function loadChats() {
+            database.ref('chats').once('value').then(snapshot => {
+                const chatsList = document.getElementById('chatsList');
+                if (!snapshot.exists()) {
+                    chatsList.innerHTML = '<p class="text-center">لا توجد محادثات</p>';
+                    return;
+                }
+                const chats = [];
+                snapshot.forEach(child => {
+                    const chat = child.val();
+                    if (chat.messages) {
+                        const messages = Object.values(chat.messages);
+                        const lastMessage = messages[messages.length - 1];
+                        chats.push({ chatId: child.key, users: child.key.split('_'), lastMessage: lastMessage.text || 'صورة', time: lastMessage.timestamp });
+                    }
+                });
+                chats.sort((a, b) => b.time - a.time);
+                Promise.all(chats.map(chat => 
+                    Promise.all(chat.users.map(uid => database.ref('users/' + uid).once('value').then(s => s.val() || { name: 'محذوف' })))
+                        .then(users => ({ ...chat, users }))
+                )).then(chatsWithUsers => {
+                    chatsList.innerHTML = chatsWithUsers.map(chat => `
+                        <div class="user-card" onclick="viewAdminChat('${chat.chatId}')">
+                            <div class="user-card-info">
+                                <div class="user-card-name">${chat.users.map(u => u.name).join(' ⟷ ')}</div>
+                                <div class="contact-preview">${chat.lastMessage}</div>
+                            </div>
+                            <div class="contact-time">${formatTime(chat.time)}</div>
+                        </div>
+                    `).join('');
+                });
+            });
+        }
+
+        function viewAdminChat(chatId) {
+            currentChatId = chatId;
+            showConversationScreen();
+            loadMessages(chatId);
+        }
+
+        function changeAdminCode() {
+            const newCode = document.getElementById('newAdminCode').value.trim().toUpperCase();
+            if (!newCode || newCode.length < 5) {
+                alert('الكود يجب أن يكون 5 أحرف على الأقل');
+                return;
+            }
+            alert('تم تغيير كود الأدمن! (في التطبيق الحقيقي يتم حفظه)');
+        }
+
+        // Chat Screen
+        function showChatScreen() {
+            ['code-screen', 'admin-screen'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = currentUser.name;
+            document.getElementById('currentUserAvatar').src = currentUser.avatar;
+            loadStories();
+            loadContacts();
+        }
+
+        function loadStories() {
+            database.ref('stories').once('value').then(snapshot => {
+                const container = document.getElementById('storiesContainer');
+                container.innerHTML = `
+                    <div class="story-item" onclick="openStoryCreator()">
+                        <div class="story-avatar-container">
+                            <div class="story-avatar-ring"><img src="${currentUser.avatar}" class="story-avatar"></div>
+                            <div class="story-add-icon"><i class="fas fa-plus"></i></div>
+                        </div>
+                        <div class="story-name">ستوريك</div>
+                    </div>
+                `;
+                if (!snapshot.exists()) return;
+                const storiesByUser = {};
+                snapshot.forEach(child => {
+                    const story = child.val();
+                    if (Date.now() - story.timestamp > 86400000) {
+                        database.ref('stories/' + child.key).remove();
+                        return;
+                    }
+                    if (story.visibility === 'private' && story.userId !== currentUser.id) return;
+                    if (!storiesByUser[story.userId]) {
+                        storiesByUser[story.userId] = { user: story.userName, avatar: story.userAvatar, stories: [] };
+                    }
+                    storiesByUser[story.userId].stories.push({ id: child.key, ...story });
+                });
+                Object.entries(storiesByUser).forEach(([userId, data]) => {
+                    container.innerHTML += `
+                        <div class="story-item" onclick="viewStories('${userId}')">
+                            <div class="story-avatar-container">
+                                <div class="story-avatar-ring"><img src="${data.avatar}" class="story-avatar"></div>
+                            </div>
+                            <div class="story-name">${data.user}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function loadContacts() {
+            database.ref('users').once('value').then(snapshot => {
+                const container = document.getElementById('contactsList');
+                if (!snapshot.exists()) {
+                    container.innerHTML = '<p class="text-center">لا يوجد مستخدمون</p>';
+                    return;
+                }
+                const contacts = [];
+                snapshot.forEach(child => {
+                    const user = child.val();
+                    if (!user.isAdmin && child.key !== currentUser.id) {
+                        contacts.push({ id: child.key, ...user });
+                    }
+                });
+                Promise.all(contacts.map(contact => {
+                    const chatId = getChatId(currentUser.id, contact.id);
+                    return database.ref('chats/' + chatId + '/messages').limitToLast(1).once('value')
+                        .then(msnapshot => {
+                            let lastMessage = null, unreadCount = 0;
+                            if (msnapshot.exists()) {
+                                lastMessage = Object.values(msnapshot.val())[0];
+                                return database.ref('chats/' + chatId + '/messages').orderByChild('read').equalTo(false).once('value')
+                                    .then(usnap => {
+                                        if (usnap.exists()) {
+                                            Object.values(usnap.val()).forEach(msg => {
+                                                if (msg.sender !== currentUser.id) unreadCount++;
+                                            });
+                                        }
+                                        return { ...contact, lastMessage, unreadCount };
+                                    });
+                            }
+                            return { ...contact, lastMessage, unreadCount };
+                        });
+                })).then(contactsWithMessages => {
+                    contactsWithMessages.sort((a, b) => {
+                        if (!a.lastMessage) return 1;
+                        if (!b.lastMessage) return -1;
+                        return b.lastMessage.timestamp - a.lastMessage.timestamp;
+                    });
+                    container.innerHTML = contactsWithMessages.map(c => {
+                        const preview = c.lastMessage ? (c.lastMessage.text || '<i class="fas fa-image"></i> صورة') : 'اضغط للبدء بالمحادثة';
+                        const time = c.lastMessage ? formatTime(c.lastMessage.timestamp) : '';
+                        return `
+                            <div class="contact-item" onclick='openConversation("${c.id}", ${JSON.stringify(c).replace(/'/g, "\\'")})'>
+                                <img src="${c.avatar}" class="contact-avatar">
+                                <div class="contact-online-indicator"></div>
+                                <div class="contact-info">
+                                    <div class="contact-header">
+                                        <div class="contact-name">${c.name}</div>
+                                        ${time ? `<div class="contact-time">${time}</div>` : ''}
+                                    </div>
+                                    <div class="contact-preview">${preview}</div>
+                                </div>
+                                ${c.unreadCount > 0 ? `<div class="unread-badge">${c.unreadCount}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                });
+            });
+        }
+
+        function formatTime(ts) {
+            const diff = Date.now() - ts;
+            if (diff < 60000) return 'الآن';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} د`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} س`;
+            if (diff < 172800000) return 'أمس';
+            return new Date(ts).toLocaleDateString('ar', { month: 'short', day: 'numeric' });
+        }
+
+        function getChatId(id1, id2) {
+            return [id1, id2].sort().join('_');
+        }
+
+        // Conversation
+        function openConversation(userId, userData) {
+            currentChatId = getChatId(currentUser.id, userId);
+            document.getElementById('chat-screen').classList.add('hidden');
+            document.getElementById('conversation-screen').classList.remove('hidden');
+            document.getElementById('conversationUserName').textContent = userData.name;
+            document.getElementById('conversationUserAvatar').src = userData.avatar;
+            loadMessages(currentChatId);
+        }
+
+        function showConversationScreen() {
+            document.getElementById('admin-screen').classList.add('hidden');
+            document.getElementById('conversation-screen').classList.remove('hidden');
+        }
+
+        function loadMessages(chatId) {
+            const container = document.getElementById('messagesContainer');
+            database.ref('chats/' + chatId + '/messages').on('value', snapshot => {
+                container.innerHTML = '';
+                if (!snapshot.exists()) {
+                    container.innerHTML = '<p class="text-center" style="color: #999; margin-top: 50px;">لا توجد رسائل. ابدأ المحادثة!</p>';
+                    return;
+                }
+                snapshot.forEach(child => renderMessage(child.val(), child.key));
+                container.scrollTop = container.scrollHeight;
+                updateReadStatus(chatId);
+            });
+        }
+
+        function renderMessage(msg, msgId) {
+            const container = document.getElementById('messagesContainer');
+            const isSent = msg.sender === currentUser.id;
+            const div = document.createElement('div');
+            div.className = `message ${isSent ? 'sent' : 'received'}`;
+            if (msg.deleted) {
+                div.innerHTML = `<div class="message-content"><div class="message-bubble"><div class="deleted-message"><i class="fas fa-ban"></i> تم حذف هذه الرسالة</div><div class="message-meta"><span>${formatTime(msg.timestamp)}</span></div></div></div>`;
+            } else if (msg.image) {
+                div.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <div class="message-image" onclick="showMediaInViewer('${msg.image}', 'image')">
+                                <img src="${msg.image}" onload="this.parentElement.querySelector('.image-loading-overlay')?.remove()">
+                                ${msg.loading ? '<div class="image-loading-overlay"><div class="loading-spinner"></div></div>' : ''}
+                            </div>
+                            ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
+                            <div class="message-meta">
+                                <span>${formatTime(msg.timestamp)}</span>
+                                ${isSent ? getStatusIcon(msg) : ''}
+                            </div>
+                        </div>
+                        ${isSent ? getMsgActions(msgId) : ''}
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <div class="message-text">${escapeHtml(msg.text)}</div>
+                            <div class="message-meta">
+                                <span>${formatTime(msg.timestamp)}</span>
+                                ${isSent ? getStatusIcon(msg) : ''}
+                            </div>
+                        </div>
+                        ${isSent ? getMsgActions(msgId) : ''}
+                    </div>
+                `;
+            }
+            container.appendChild(div);
+        }
+
+        function getStatusIcon(msg) {
+            if (msg.read) return '<div class="message-status status-read"><i class="fas fa-check-double"></i></div>';
+            if (msg.delivered) return '<div class="message-status status-delivered"><i class="fas fa-check-double"></i></div>';
+            return '<div class="message-status"><i class="fas fa-check"></i></div>';
+        }
+
+        function getMsgActions(msgId) {
+            return `
+                <div class="message-actions">
+                    <button class="message-action-btn" onclick="deleteMessage('${msgId}', false)"><i class="fas fa-trash"></i> حذف لدي فقط</button>
+                    <button class="message-action-btn danger" onclick="deleteMessage('${msgId}', true)"><i class="fas fa-trash-alt"></i> حذف للطرفين</button>
+                </div>
+            `;
+        }
+
+        function deleteMessage(msgId, forEveryone) {
+            if (confirm(forEveryone ? 'حذف للطرفين؟' : 'حذف لديك فقط؟')) {
+                if (forEveryone) {
+                    database.ref('chats/' + currentChatId + '/messages/' + msgId).update({ deleted: true, text: null, image: null });
+                }
+            }
+        }
+
+        function updateReadStatus(chatId) {
+            database.ref('chats/' + chatId + '/messages').orderByChild('read').equalTo(false).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const updates = {};
+                    snapshot.forEach(child => {
+                        if (child.val().sender !== currentUser.id) {
+                            updates[child.key + '/read'] = true;
+                        }
+                    });
+                    database.ref('chats/' + chatId + '/messages').update(updates);
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function backToContacts() {
+            document.getElementById('conversation-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            if (currentChatId) database.ref('chats/' + currentChatId + '/messages').off();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const msg = { text, sender: currentUser.id, timestamp: Date.now(), sent: true, delivered: false, read: false };
+            database.ref('chats/' + currentChatId + '/messages').push(msg).then(() => {
+                input.value = '';
+                input.style.height = 'auto';
+                setTimeout(() => {
+                    database.ref('chats/' + currentChatId + '/messages').orderByChild('timestamp').limitToLast(1).once('value').then(snapshot => {
+                        snapshot.forEach(child => child.ref.update({ delivered: true }));
+                    });
+                }, 1000);
+            });
+        }
+
+        function selectImage() {
+            document.getElementById('imageInput').click();
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const ref = storage.ref('chat-images/' + Date.now() + '_' + file.name);
+            ref.put(file).then(task => {
+                task.snapshot.ref.getDownloadURL().then(url => {
+                    const msg = { image: url, sender: currentUser.id, timestamp: Date.now(), sent: true, delivered: false, read: false };
+                    database.ref('chats/' + currentChatId + '/messages').push(msg);
+                });
+            });
+            event.target.value = '';
+        }
+
+        // Voice Recording
+        function startVoiceRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                isRecording = true;
+                mediaRecorder = new MediaRecorder(stream);
+                const chunks = [];
+                mediaRecorder.addEventListener('dataavailable', e => chunks.push(e.data));
+                mediaRecorder.addEventListener('stop', () => {
+                    const blob = new Blob(chunks, { type: 'audio/mp3' });
+                    uploadVoiceMessage(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                });
+                mediaRecorder.start();
+                document.getElementById('inputArea').classList.add('hidden');
+                document.getElementById('voiceRecordingArea').classList.remove('hidden');
+                recordingStartTime = Date.now();
+                updateRecordingDuration();
+                recordingInterval = setInterval(updateRecordingDuration, 1000);
+            }).catch(() => alert('لا يمكن الوصول إلى الميكروفون'));
+        }
+
+        function updateRecordingDuration() {
+            const dur = Math.floor((Date.now() - recordingStartTime) / 1000);
+            document.getElementById('recordingDuration').textContent = `${Math.floor(dur / 60)}:${(dur % 60).toString().padStart(2, '0')}`;
+        }
+
+        function cancelVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                clearInterval(recordingInterval);
+                document.getElementById('voiceRecordingArea').classList.add('hidden');
+                document.getElementById('inputArea').classList.remove('hidden');
+            }
+        }
+
+        function uploadVoiceMessage(blob) {
+            const ref = storage.ref('voice/' + Date.now() + '.mp3');
+            ref.put(blob).then(task => {
+                task.snapshot.ref.getDownloadURL().then(url => {
+                    const dur = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    const msg = { audio: url, duration: `${Math.floor(dur / 60)}:${(dur % 60).toString().padStart(2, '0')}`, sender: currentUser.id, timestamp: Date.now(), sent: true, delivered: false, read: false };
+                    database.ref('chats/' + currentChatId + '/messages').push(msg);
+                    document.getElementById('voiceRecordingArea').classList.add('hidden');
+                    document.getElementById('inputArea').classList.remove('hidden');
+                });
+            });
+        }
+
+        // Story Functions
+        function openStoryCreator() {
+            document.getElementById('story-creator').classList.remove('hidden');
+        }
+
+        function closeStoryCreator() {
+            document.getElementById('story-creator').classList.add('hidden');
+            document.getElementById('creatorContent').innerHTML = '<button class="btn btn-primary" onclick="selectStoryMedia()"><i class="fas fa-image"></i> اختر صورة أو فيديو</button>';
+            document.getElementById('creatorControls').classList.add('hidden');
+            selectedStoryFile = null;
+            storyVisibility = 'public';
+        }
+
+        function selectStoryMedia() {
+            document.getElementById('storyInput').click();
+        }
+
+        function handleStorySelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            selectedStoryFile = file;
+            const url = URL.createObjectURL(file);
+            const isVideo = file.type.startsWith('video/');
+            document.getElementById('creatorContent').innerHTML = isVideo ? 
+                `<video class="media-preview" src="${url}" controls></video>` :
+                `<img class="media-preview" src="${url}">`;
+            document.getElementById('creatorControls').classList.remove('hidden');
+            event.target.value = '';
+        }
+
+        function setStoryVisibility(vis) {
+            storyVisibility = vis;
+            document.getElementById('publicBtn').classList.toggle('active', vis === 'public');
+            document.getElementById('privateBtn').classList.toggle('active', vis === 'private');
+        }
+
+        function postStory() {
+            if (!selectedStoryFile) {
+                alert('الرجاء اختيار صورة أو فيديو');
+                return;
+            }
+            const isVideo = selectedStoryFile.type.startsWith('video/');
+            const ref = storage.ref('stories/' + Date.now() + '_' + selectedStoryFile.name);
+            document.getElementById('creatorContent').innerHTML = '<div style="text-align: center; color: #fff;"><div class="loading-spinner" style="margin: 20px auto;"></div><p>جاري رفع الستوري...</p></div>';
+            ref.put(selectedStoryFile).then(task => {
+                task.snapshot.ref.getDownloadURL().then(url => {
+                    const story = {
+                        userId: currentUser.id,
+                        userName: currentUser.name,
+                        userAvatar: currentUser.avatar,
+                        type: isVideo ? 'video' : 'image',
+                        url: url,
+                        visibility: storyVisibility,
+                        duration: isVideo ? 20 : 5,
+                        timestamp: Date.now()
+                    };
+                    database.ref('stories').push(story).then(() => {
+                        closeStoryCreator();
+                        loadStories();
+                    });
+                });
+            }).catch(() => {
+                alert('خطأ في رفع الستوري');
+                closeStoryCreator();
+            });
+        }
+
+        function viewStories(userId) {
+            database.ref('stories').orderByChild('userId').equalTo(userId).once('value').then(snapshot => {
+                if (!snapshot.exists()) return;
+                currentUserStories = [];
+                snapshot.forEach(child => {
+                    const story = child.val();
+                    if (story.visibility === 'public' || story.userId === currentUser.id) {
+                        currentUserStories.push({ id: child.key, ...story });
+                    }
+                });
+                if (currentUserStories.length > 0) {
+                    currentStoryIndex = 0;
+                    showStoryViewer();
+                }
+            });
+        }
+
+        function showStoryViewer() {
+            document.getElementById('story-viewer').classList.remove('hidden');
+            displayCurrentStory();
+        }
+
+        function closeStoryViewer() {
+            document.getElementById('story-viewer').classList.add('hidden');
+            currentUserStories = [];
+            currentStoryIndex = 0;
+        }
+
+        function displayCurrentStory() {
+            if (currentStoryIndex >= currentUserStories.length) {
+                closeStoryViewer();
+                return;
+            }
+            const story = currentUserStories[currentStoryIndex];
+            document.getElementById('storyUserAvatar').src = story.userAvatar;
+            document.getElementById('storyUserName').textContent = story.userName;
+            document.getElementById('storyTime').textContent = formatTime(story.timestamp);
+            document.getElementById('storyProgressBars').innerHTML = currentUserStories.map((_, i) => 
+                `<div class="story-progress-bar"><div class="story-progress-fill" id="progress-${i}"></div></div>`
+            ).join('');
+            document.getElementById('storyContent').innerHTML = story.type === 'video' ?
+                `<video class="story-media" src="${story.url}" autoplay></video>` :
+                `<img class="story-media" src="${story.url}">`;
+            animateProgressBar(currentStoryIndex, story.duration);
+        }
+
+        function animateProgressBar(index, duration) {
+            const bar = document.getElementById(`progress-${index}`);
+            if (!bar) return;
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 100 / (duration * 10);
+                bar.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    nextStory();
+                }
+            }, 100);
+        }
+
+        function previousStory() {
+            if (currentStoryIndex > 0) {
+                currentStoryIndex--;
+                displayCurrentStory();
+            }
+        }
+
+        function nextStory() {
+            if (currentStoryIndex < currentUserStories.length - 1) {
+                currentStoryIndex++;
+                displayCurrentStory();
+            } else {
+                closeStoryViewer();
+            }
+        }
+
+        // Media Viewer
+        function showMediaInViewer(url, type) {
+            document.getElementById('media-viewer').classList.remove('hidden');
+            document.getElementById('mediaViewerContent').innerHTML = type === 'video' ?
+                `<video src="${url}" controls autoplay></video>` :
+                `<img src="${url}">`;
+        }
+
+        function closeMediaViewer() {
+            document.getElementById('media-viewer').classList.add('hidden');
+        }
+
+        function downloadMedia() {
+            const media = document.querySelector('#mediaViewerContent img, #mediaViewerContent video');
+            if (media) {
+                const a = document.createElement('a');
+                a.href = media.src;
+                a.download = 'media_' + Date.now();
+                a.click();
+            }
+        }
+
+        function openMediaViewer() {
+            alert('معرض الوسائط - قريباً!');
+        }
+
+        function showConversationMenu() {
+            alert('قائمة المحادثة - قريباً!');
+        }
+
+        // Settings & Logout
+        function showSettings() {
+            alert('الإعدادات - قريباً!');
+        }
+
+        function logout() {
+            if (confirm('تسجيل الخروج؟')) {
+                currentUser = null;
+                currentChatId = null;
+                showFakeGmail();
+            }
+        }
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
+
+        // Enter to send
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').catch(() => {});
+        }
     </script>
 </body>
 </html>
