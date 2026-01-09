@@ -1,7 +1,7 @@
 {
   "name": "Gmail",
   "short_name": "Gmail",
-  "description": "Gmail Chat Application",
+  "description": "تطبيق محادثات متقدم بواجهة Gmail",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,8 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
+      "src": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]

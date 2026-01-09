@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gmail</title>
-    <link rel="icon" href="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico">
-    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * {
@@ -18,46 +20,67 @@
         }
 
         body {
-            background: #e5ddd5;
+            background: #f0f2f5;
             overflow: hidden;
         }
 
-        /* ==================== Gmail Fake Screen ==================== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==================== Gmail Fake Interface ==================== */
         #gmail-screen {
             background: #fff;
             height: 100vh;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .gmail-header {
-            background: #c71610;
+            background: linear-gradient(135deg, #c71610 0%, #d44638 100%);
             color: white;
-            padding: 16px 20px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(199, 22, 16, 0.3);
+            position: relative;
+            z-index: 100;
         }
 
-        .gmail-logo {
+        .gmail-menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-left: 15px;
+            padding: 5px;
+            transition: background 0.2s;
+            border-radius: 50%;
             width: 40px;
             height: 40px;
-            cursor: pointer;
-            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .gmail-logo:hover {
-            transform: scale(1.1);
+        .gmail-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
         }
 
         .gmail-search {
             flex: 1;
-            margin: 0 20px;
-            background: rgba(255,255,255,0.2);
+            margin: 0 15px;
+            background: rgba(255,255,255,0.15);
             border-radius: 8px;
-            padding: 10px 15px;
+            padding: 8px 15px;
             display: flex;
             align-items: center;
-            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .gmail-search:hover {
+            background: rgba(255,255,255,0.25);
         }
 
         .gmail-search input {
@@ -70,13 +93,45 @@
         }
 
         .gmail-search input::placeholder {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .gmail-search i {
+            color: white;
+            margin-left: 10px;
+        }
+
+        .gmail-profile-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            color: #c71610;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .gmail-profile-icon:hover {
+            transform: scale(1.05);
         }
 
         .gmail-content {
             background: #f5f5f5;
-            height: calc(100vh - 72px);
+            flex: 1;
             overflow-y: auto;
+        }
+
+        .email-category {
+            background: #e8f0fe;
+            padding: 8px 20px;
+            font-weight: 500;
+            color: #1967d2;
+            border-bottom: 1px solid #d2e3fc;
         }
 
         .email-item {
@@ -84,53 +139,66 @@
             border-bottom: 1px solid #e0e0e0;
             padding: 16px 20px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
+            position: relative;
         }
 
         .email-item:hover {
             background: #f8f8f8;
+            box-shadow: inset 3px 0 0 #c71610;
+        }
+
+        .email-item.unread {
+            background: #f6f8fc;
+            font-weight: 500;
         }
 
         .email-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: #c71610;
+            background: linear-gradient(135deg, #c71610, #d44638);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
             margin-left: 15px;
-            font-size: 18px;
+            font-size: 16px;
+            flex-shrink: 0;
         }
 
         .email-info {
             flex: 1;
+            min-width: 0;
         }
 
         .email-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            align-items: center;
         }
 
         .email-sender {
-            font-weight: bold;
+            font-weight: 600;
             color: #202124;
+            font-size: 14px;
         }
 
         .email-time {
             color: #5f6368;
             font-size: 12px;
+            white-space: nowrap;
         }
 
         .email-subject {
             font-weight: 500;
             color: #202124;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
+            font-size: 13px;
         }
 
         .email-preview {
@@ -141,6 +209,16 @@
             white-space: nowrap;
         }
 
+        .unread-badge {
+            background: #c71610;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 8px;
+        }
+
+        /* Email Modal */
         .email-modal {
             position: fixed;
             top: 0;
@@ -152,6 +230,12 @@
             align-items: center;
             justify-content: center;
             z-index: 10000;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .email-modal-content {
@@ -161,31 +245,89 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            padding: 30px;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .email-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+
+        .email-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #202124;
+        }
+
+        .email-modal-close {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #5f6368;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .email-modal-close:hover {
+            background: #e8eaed;
+        }
+
+        .email-modal-body {
+            padding: 25px;
+        }
+
+        .email-modal-from {
+            display: flex;
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 1px solid #e0e0e0;
         }
 
-        .email-modal-close {
-            background: #f1f3f4;
-            border: none;
-            width: 35px;
-            height: 35px;
+        .email-modal-from-avatar {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            color: #5f6368;
+            background: linear-gradient(135deg, #c71610, #d44638);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-left: 15px;
+            font-size: 20px;
         }
 
-        .email-modal-close:hover {
-            background: #e8eaed;
+        .email-modal-from-info h3 {
+            color: #202124;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .email-modal-from-info p {
+            color: #5f6368;
+            font-size: 13px;
+        }
+
+        .email-modal-text {
+            color: #202124;
+            line-height: 1.6;
+            font-size: 14px;
         }
 
         /* ==================== Login Screen ==================== */
@@ -204,264 +346,222 @@
             position: absolute;
             width: 200%;
             height: 200%;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: moveGrid 20s linear infinite;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: moveBackground 20s linear infinite;
         }
 
-        @keyframes moveGrid {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
+        @keyframes moveBackground {
+            from { transform: translate(0, 0); }
+            to { transform: translate(30px, 30px); }
         }
 
         .login-container {
-            background: rgba(255,255,255,0.95);
+            background: white;
+            padding: 40px;
             border-radius: 20px;
-            padding: 50px 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             text-align: center;
-            position: relative;
-            z-index: 1;
             max-width: 400px;
             width: 90%;
-            animation: slideUp 0.5s ease;
+            position: relative;
+            z-index: 1;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #128C7E, #075E54);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 25px;
-            box-shadow: 0 10px 25px rgba(18,140,126,0.3);
-        }
-
-        .login-icon i {
-            font-size: 35px;
-            color: white;
+        .login-logo {
+            font-size: 60px;
+            color: #128C7E;
+            margin-bottom: 20px;
         }
 
         .login-title {
-            font-size: 26px;
-            color: #128C7E;
+            font-size: 28px;
+            font-weight: bold;
+            color: #075E54;
             margin-bottom: 10px;
-            font-weight: 600;
         }
 
         .login-subtitle {
-            color: #666;
+            color: #667781;
             margin-bottom: 30px;
             font-size: 14px;
         }
 
         .login-input {
             width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #e9edef;
+            border-radius: 10px;
             font-size: 16px;
-            margin-bottom: 20px;
-            transition: all 0.3s;
+            margin-bottom: 15px;
+            transition: border 0.3s;
             text-align: center;
-            letter-spacing: 3px;
-            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
         }
 
         .login-input:focus {
             outline: none;
             border-color: #128C7E;
-            box-shadow: 0 0 0 4px rgba(18,140,126,0.1);
-        }
-
-        .login-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
         }
 
         .login-btn {
-            flex: 1;
+            width: 100%;
             padding: 15px;
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+            color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(7, 94, 84, 0.3);
         }
 
-        .login-btn-primary {
-            background: linear-gradient(135deg, #128C7E, #075E54);
-            color: white;
-        }
-
-        .login-btn-primary:hover {
+        .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(18,140,126,0.4);
+            box-shadow: 0 6px 20px rgba(7, 94, 84, 0.4);
         }
 
-        .login-btn-secondary {
-            background: #f0f0f0;
-            color: #333;
+        .login-btn:active {
+            transform: translateY(0);
         }
 
-        .login-btn-secondary:hover {
-            background: #e0e0e0;
+        .login-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f2f5;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #667781;
+            text-align: right;
         }
 
-        .error-message {
-            background: #fee;
-            color: #c00;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-        }
-
-        /* ==================== Main Chat Screen (WhatsApp Style) ==================== */
-        #main-screen {
-            background: #111b21;
+        /* ==================== Main Chat Screen ==================== */
+        #chat-screen {
             height: 100vh;
             display: flex;
+            background: #f0f2f5;
         }
 
         /* Sidebar */
-        .chat-sidebar {
+        .sidebar {
             width: 400px;
-            background: #111b21;
+            background: white;
+            border-left: 1px solid #e9edef;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid #2a3942;
         }
 
         .sidebar-header {
-            background: #202c33;
-            padding: 12px 16px;
+            background: #f0f2f5;
+            padding: 15px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
 
-        .user-profile-btn {
+        .sidebar-header h2 {
+            color: #111b21;
+            font-size: 20px;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .sidebar-btn {
+            background: transparent;
+            border: none;
+            color: #54656f;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
+            justify-content: center;
             transition: background 0.2s;
         }
 
-        .user-profile-btn:hover {
-            background: rgba(255,255,255,0.05);
+        .sidebar-btn:hover {
+            background: #f0f2f5;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
+        .sidebar-search {
+            padding: 10px 15px;
+            background: #f0f2f5;
         }
 
-        .user-name {
-            color: #e9edef;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .header-icons {
-            display: flex;
-            gap: 20px;
-        }
-
-        .header-icon {
-            color: #aebac1;
-            font-size: 20px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .header-icon:hover {
-            color: #e9edef;
-        }
-
-        .search-bar {
-            background: #202c33;
-            padding: 10px 12px;
-        }
-
-        .search-input-wrapper {
-            background: #111b21;
+        .search-box {
+            background: white;
             border-radius: 8px;
-            padding: 8px 15px;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
 
-        .search-input-wrapper i {
-            color: #aebac1;
-            font-size: 14px;
+        .search-box i {
+            color: #54656f;
         }
 
-        .search-input {
-            flex: 1;
-            background: none;
+        .search-box input {
             border: none;
-            color: #e9edef;
-            font-size: 14px;
             outline: none;
-        }
-
-        .search-input::placeholder {
-            color: #667781;
+            width: 100%;
+            font-size: 14px;
+            color: #111b21;
         }
 
         .chats-list {
             flex: 1;
             overflow-y: auto;
-            background: #111b21;
         }
 
         .chat-item {
-            padding: 12px 16px;
+            padding: 15px;
             display: flex;
             align-items: center;
-            gap: 12px;
             cursor: pointer;
-            border-bottom: 1px solid #2a3942;
+            border-bottom: 1px solid #e9edef;
             transition: background 0.2s;
+            position: relative;
         }
 
         .chat-item:hover {
-            background: #202c33;
+            background: #f5f6f6;
         }
 
         .chat-item.active {
-            background: #2a3942;
+            background: #f0f2f5;
         }
 
         .chat-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
+            margin-left: 15px;
             object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .default-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #128C7E, #075E54);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            margin-left: 15px;
             flex-shrink: 0;
         }
 
@@ -477,17 +577,17 @@
         }
 
         .chat-name {
-            color: #e9edef;
-            font-size: 16px;
             font-weight: 500;
+            color: #111b21;
+            font-size: 16px;
         }
 
         .chat-time {
-            color: #667781;
             font-size: 12px;
+            color: #667781;
         }
 
-        .chat-preview {
+        .chat-last-message {
             color: #667781;
             font-size: 14px;
             overflow: hidden;
@@ -495,88 +595,82 @@
             white-space: nowrap;
         }
 
-        .unread-badge {
+        .unread-count {
             background: #25d366;
             color: white;
-            font-size: 12px;
-            padding: 2px 8px;
             border-radius: 12px;
-            font-weight: 600;
+            padding: 2px 7px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
         }
 
-        /* Main Chat Area */
-        .chat-main {
+        /* Chat Area */
+        .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #0b141a;
+            background: #efeae2;
         }
 
-        .chat-header-main {
-            background: #202c33;
-            padding: 12px 16px;
+        .chat-area-header {
+            background: #f0f2f5;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #2a3942;
+            border-bottom: 1px solid #e9edef;
         }
 
-        .chat-header-left {
+        .chat-user-info {
             display: flex;
             align-items: center;
-            gap: 12px;
             cursor: pointer;
+            flex: 1;
         }
 
-        .back-btn {
-            color: #aebac1;
+        .chat-user-info:hover {
+            opacity: 0.8;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .chat-action-btn {
+            background: transparent;
+            border: none;
+            color: #54656f;
             font-size: 20px;
             cursor: pointer;
-            display: none;
-        }
-
-        .current-chat-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .current-chat-avatar {
+            padding: 5px;
+            border-radius: 50%;
             width: 40px;
             height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .current-chat-name {
-            color: #e9edef;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .current-chat-status {
-            color: #667781;
-            font-size: 13px;
-        }
-
-        .chat-header-right {
             display: flex;
-            gap: 25px;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
         }
 
-        /* Messages Area */
-        .messages-area {
+        .chat-action-btn:hover {
+            background: #e9edef;
+        }
+
+        .messages-container {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%230b141a"/><circle cx="50" cy="50" r="1" fill="%23182229" opacity="0.3"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23efeae2" width="100" height="100"/><path fill="%23e1d9ce" d="M0 0L100 100M100 0L0 100" opacity="0.05"/></svg>');
+            background-size: 100px 100px;
         }
 
         .message {
             margin-bottom: 12px;
             display: flex;
-            gap: 8px;
-            animation: messageSlide 0.3s ease;
+            animation: messageSlide 0.3s;
         }
 
         @keyframes messageSlide {
@@ -594,212 +688,168 @@
             justify-content: flex-end;
         }
 
+        .message.received {
+            justify-content: flex-start;
+        }
+
         .message-bubble {
             max-width: 65%;
             padding: 8px 12px;
             border-radius: 8px;
             position: relative;
             word-wrap: break-word;
-        }
-
-        .message.received .message-bubble {
-            background: #202c33;
-            color: #e9edef;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .message.sent .message-bubble {
-            background: #005c4b;
-            color: #e9edef;
+            background: #d9fdd3;
+            border-bottom-left-radius: 2px;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border-bottom-right-radius: 2px;
         }
 
         .message-text {
-            font-size: 14.2px;
+            color: #111b21;
+            font-size: 14px;
             line-height: 1.5;
-            margin-bottom: 4px;
+            white-space: pre-wrap;
         }
 
         .message-image {
             max-width: 100%;
             border-radius: 8px;
-            margin-bottom: 4px;
             cursor: pointer;
+            margin-bottom: 5px;
         }
 
         .message-audio {
             width: 100%;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
-        .message-footer {
+        .message-meta {
             display: flex;
-            align-items: center;
             justify-content: flex-end;
+            align-items: center;
             gap: 5px;
+            margin-top: 4px;
             font-size: 11px;
             color: #667781;
         }
 
         .message-time {
-            color: #8696a0;
-        }
-
-        .message-status i {
-            font-size: 16px;
-        }
-
-        .message-status .sending {
+            font-size: 11px;
             color: #667781;
         }
 
-        .message-status .sent {
-            color: #8696a0;
-        }
-
-        .message-status .delivered {
-            color: #8696a0;
-        }
-
-        .message-status .read {
+        .message-status {
             color: #53bdeb;
+            font-size: 16px;
         }
 
-        .message-menu {
+        .message-deleted {
+            font-style: italic;
+            color: #667781;
+        }
+
+        .message-options {
             position: absolute;
-            background: #2a3942;
+            top: -30px;
+            left: 10px;
+            background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            padding: 8px 0;
-            min-width: 180px;
-            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            z-index: 10;
         }
 
-        .message-menu-item {
-            padding: 10px 20px;
-            color: #e9edef;
+        .message-option-btn {
+            background: transparent;
+            border: none;
+            color: #667781;
+            padding: 8px 12px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            border-radius: 5px;
             font-size: 14px;
             transition: background 0.2s;
         }
 
-        .message-menu-item:hover {
-            background: #202c33;
+        .message-option-btn:hover {
+            background: #f5f6f6;
         }
 
-        .message-menu-item.danger {
-            color: #ea4235;
-        }
-
-        .deleted-message {
-            font-style: italic;
-            color: #667781;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .message-option-btn.delete {
+            color: #ea4335;
         }
 
         /* Input Area */
         .input-area {
-            background: #202c33;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .input-icons {
-            display: flex;
-            gap: 12px;
-        }
-
-        .input-icon {
-            color: #aebac1;
-            font-size: 24px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .input-icon:hover {
-            color: #e9edef;
-        }
-
-        .message-input-wrapper {
-            flex: 1;
-            background: #2a3942;
-            border-radius: 8px;
+            background: #f0f2f5;
             padding: 10px 15px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .message-input {
-            flex: 1;
-            background: none;
+        .input-btn {
+            background: transparent;
             border: none;
-            color: #e9edef;
-            font-size: 15px;
-            outline: none;
-            max-height: 100px;
-            resize: none;
+            color: #54656f;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            transition: transform 0.2s;
         }
 
-        .message-input::placeholder {
-            color: #667781;
+        .input-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .input-box {
+            flex: 1;
+            background: white;
+            border-radius: 25px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            color: #111b21;
         }
 
         .send-btn {
-            background: #25d366;
+            background: #128C7E;
+            color: white;
+            border: none;
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
         }
 
         .send-btn:hover {
-            background: #20bd5a;
+            background: #075E54;
             transform: scale(1.05);
         }
 
-        .recording-indicator {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .recording-dot {
-            width: 12px;
-            height: 12px;
-            background: #ff3b30;
-            border-radius: 50%;
-            animation: pulse 1.5s ease infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .recording-time {
-            color: #e9edef;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .recording-cancel {
-            color: #ea4235;
-            cursor: pointer;
-            font-size: 14px;
+        .send-btn:active {
+            transform: scale(0.95);
         }
 
         /* Image Preview Modal */
@@ -810,22 +860,30 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.95);
-            z-index: 10000;
             display: flex;
             flex-direction: column;
+            z-index: 10001;
+            animation: fadeIn 0.3s;
         }
 
         .preview-header {
-            background: #202c33;
-            padding: 12px 16px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .preview-title {
+            color: white;
+            font-size: 18px;
         }
 
         .preview-close {
-            color: #e9edef;
-            font-size: 24px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 30px;
             cursor: pointer;
         }
 
@@ -835,74 +893,112 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            overflow: auto;
         }
 
-        .preview-images-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            max-width: 1000px;
-            width: 100%;
+        .preview-images {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+            overflow-y: auto;
         }
 
         .preview-image-item {
             position: relative;
-            aspect-ratio: 1;
+            max-width: 300px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
             border-radius: 8px;
-            overflow: hidden;
         }
 
-        .preview-image-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .preview-image-remove {
+        .remove-preview-image {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0,0,0,0.6);
+            top: 10px;
+            left: 10px;
+            background: rgba(255,0,0,0.8);
             color: white;
+            border: none;
             width: 30px;
             height: 30px;
             border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
         }
 
         .preview-footer {
-            background: #202c33;
-            padding: 16px;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .preview-caption {
-            background: #2a3942;
-            border: none;
-            border-radius: 8px;
-            padding: 12px;
-            width: 100%;
-            color: #e9edef;
-            font-size: 14px;
-            margin-bottom: 12px;
-            outline: none;
-            resize: none;
+        .preview-input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 15px;
+        }
+
+        .preview-input::placeholder {
+            color: rgba(255,255,255,0.6);
         }
 
         .preview-send-btn {
             background: #25d366;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 25px;
             cursor: pointer;
-            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .preview-send-btn:hover {
+            background: #1da851;
+            transform: scale(1.05);
+        }
+
+        /* Voice Recording */
+        .recording-indicator {
+            background: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         /* Profile Modal */
@@ -912,346 +1008,454 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        .profile-content {
+            background: white;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #128C7E, #075E54);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .profile-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .profile-content {
-            background: #111b21;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            object-fit: cover;
+            border: 4px solid white;
         }
 
-        .profile-header {
-            background: #202c33;
-            padding: 20px;
+        .profile-default-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 50px;
+            margin: 0 auto 15px;
+            border: 4px solid white;
         }
 
-        .profile-title {
-            color: #e9edef;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .profile-close {
-            color: #aebac1;
+        .profile-name {
             font-size: 24px;
-            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .profile-code {
+            font-size: 14px;
+            opacity: 0.9;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
         }
 
         .profile-body {
             padding: 20px;
         }
 
-        .profile-avatar-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .profile-avatar-large {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 15px;
-        }
-
-        .profile-name-large {
-            color: #e9edef;
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .profile-code {
-            color: #667781;
-            font-size: 14px;
-        }
-
         .profile-section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .profile-section-title {
-            color: #00a884;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 14px;
+            color: #667781;
             margin-bottom: 10px;
+            font-weight: 500;
         }
 
-        .profile-section-content {
-            color: #e9edef;
-            font-size: 16px;
-            padding: 12px;
-            background: #202c33;
-            border-radius: 8px;
-        }
-
-        .profile-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .profile-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
+        .profile-info {
+            background: #f0f2f5;
+            padding: 15px;
             border-radius: 8px;
             font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: #111b21;
         }
 
-        .profile-btn-primary {
-            background: #00a884;
-            color: white;
+        .profile-qr {
+            text-align: center;
+            background: #f0f2f5;
+            padding: 20px;
+            border-radius: 8px;
         }
 
-        .profile-btn-danger {
-            background: #ea4235;
-            color: white;
+        .profile-qr canvas {
+            border: 4px solid white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         /* Friend Requests */
-        .requests-tab {
-            padding: 20px;
-        }
-
-        .request-item {
-            background: #202c33;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .request-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .request-info {
-            flex: 1;
-        }
-
-        .request-name {
-            color: #e9edef;
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .request-code {
-            color: #667781;
-            font-size: 13px;
-        }
-
-        .request-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .request-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .request-btn-accept {
-            background: #00a884;
-            color: white;
-        }
-
-        .request-btn-reject {
-            background: #ea4235;
-            color: white;
-        }
-
-        /* Search/Add Friend */
-        .add-friend-section {
-            padding: 20px;
-        }
-
-        .search-friend-input {
-            width: 100%;
-            padding: 12px 15px;
-            background: #2a3942;
-            border: none;
-            border-radius: 8px;
-            color: #e9edef;
-            font-size: 15px;
-            margin-bottom: 20px;
-            outline: none;
-        }
-
-        .friend-result {
-            background: #202c33;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .add-friend-btn {
-            padding: 8px 20px;
-            background: #00a884;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* QR Scanner */
-        .qr-scanner-modal {
+        .friend-requests-modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        .friend-requests-content {
+            background: white;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
             display: flex;
             flex-direction: column;
         }
 
-        .qr-scanner-header {
-            background: #202c33;
-            padding: 16px;
+        .friend-requests-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9edef;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .qr-scanner-title {
-            color: #e9edef;
-            font-size: 18px;
-            font-weight: 600;
+        .friend-requests-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111b21;
         }
 
-        .qr-scanner-content {
-            flex: 1;
+        .friend-requests-close {
+            background: transparent;
+            border: none;
+            color: #54656f;
+            font-size: 24px;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        .friend-requests-close:hover {
+            background: #f0f2f5;
+        }
+
+        .friend-requests-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .friend-request-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9edef;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .friend-request-info {
+            flex: 1;
+        }
+
+        .friend-request-name {
+            font-weight: 600;
+            color: #111b21;
+            margin-bottom: 4px;
+        }
+
+        .friend-request-code {
+            font-size: 13px;
+            color: #667781;
+        }
+
+        .friend-request-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .accept-btn, .reject-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .accept-btn {
+            background: #25d366;
+            color: white;
+        }
+
+        .accept-btn:hover {
+            background: #1da851;
+        }
+
+        .reject-btn {
+            background: #f0f2f5;
+            color: #667781;
+        }
+
+        .reject-btn:hover {
+            background: #e9edef;
+        }
+
+        /* Search User Modal */
+        .search-user-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        .search-user-content {
+            background: white;
+            border-radius: 12px;
+            width: 450px;
+            max-width: 90%;
+            padding: 25px;
+        }
+
+        .search-user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-user-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111b21;
+        }
+
+        .search-user-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-tab {
+            flex: 1;
+            padding: 10px;
+            background: #f0f2f5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .search-tab.active {
+            background: #128C7E;
+            color: white;
+        }
+
+        .search-user-input-group {
+            margin-bottom: 20px;
+        }
+
+        .search-user-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9edef;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border 0.3s;
+        }
+
+        .search-user-input:focus {
+            outline: none;
+            border-color: #128C7E;
+        }
+
+        .qr-scanner-container {
+            background: #f0f2f5;
+            border-radius: 8px;
             padding: 20px;
+            text-align: center;
         }
 
         #qr-reader {
-            width: 100%;
-            max-width: 500px;
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
+            margin-bottom: 15px;
         }
 
-        .qr-instructions {
-            color: #e9edef;
+        .search-result {
+            background: #f0f2f5;
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
-            margin-top: 20px;
-            font-size: 16px;
+        }
+
+        .search-result-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            object-fit: cover;
+        }
+
+        .search-result-default-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #128C7E, #075E54);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 35px;
+            margin: 0 auto 15px;
+        }
+
+        .search-result-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111b21;
+            margin-bottom: 8px;
+        }
+
+        .search-result-code {
+            font-size: 14px;
+            color: #667781;
+            margin-bottom: 20px;
+        }
+
+        .add-friend-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .add-friend-btn:hover {
+            background: #1da851;
+            transform: scale(1.05);
+        }
+
+        .add-friend-btn:disabled {
+            background: #e9edef;
+            color: #667781;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Empty State */
         .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #667781;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #111b21;
+        }
+
+        /* No Chat Selected */
+        .no-chat-selected {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #667781;
+            background: #f0f2f5;
             padding: 40px;
             text-align: center;
         }
 
-        .empty-icon {
+        .no-chat-icon {
             font-size: 80px;
+            color: #d9d9d9;
             margin-bottom: 20px;
-            opacity: 0.3;
         }
 
-        .empty-title {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #8696a0;
+        .no-chat-title {
+            font-size: 32px;
+            color: #41525d;
+            margin-bottom: 15px;
         }
 
-        .empty-description {
+        .no-chat-subtitle {
             font-size: 14px;
-            max-width: 400px;
-        }
-
-        /* Loading */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #2a3942;
-            border-top-color: #25d366;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #374045;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4a5458;
+            color: #667781;
+            line-height: 1.6;
+            max-width: 500px;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .chat-sidebar {
+            .sidebar {
                 width: 100%;
             }
 
-            .chat-main {
+            .chat-area {
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -1260,639 +1464,273 @@
                 z-index: 100;
             }
 
-            .chat-main.hidden {
-                display: none;
-            }
-
-            .back-btn {
-                display: block;
-            }
-
             .message-bubble {
                 max-width: 85%;
             }
         }
 
-        /* Admin Panel */
-        .admin-panel {
-            background: #111b21;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .admin-header {
-            background: #202c33;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
 
-        .admin-title {
-            color: #e9edef;
-            font-size: 20px;
-            font-weight: 600;
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
         }
 
-        .admin-tabs {
-            display: flex;
-            gap: 10px;
-            background: #202c33;
-            padding: 0 20px;
-            border-bottom: 1px solid #2a3942;
-        }
-
-        .admin-tab {
-            padding: 12px 20px;
-            color: #aebac1;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .admin-tab.active {
-            color: #00a884;
-            border-bottom-color: #00a884;
-        }
-
-        .admin-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .create-user-form {
-            background: #202c33;
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 500px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            color: #e9edef;
-            font-size: 14px;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            background: #2a3942;
-            border: 1px solid #374045;
-            border-radius: 8px;
-            color: #e9edef;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .form-input:focus {
-            border-color: #00a884;
-        }
-
-        .file-upload-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #00a884;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .submit-btn {
-            background: #00a884;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .users-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-        }
-
-        .user-card {
-            background: #202c33;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .user-card-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin-bottom: 15px;
-            object-fit: cover;
-        }
-
-        .user-card-name {
-            color: #e9edef;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .user-card-code {
-            color: #667781;
-            font-size: 13px;
-            margin-bottom: 15px;
-        }
-
-        .user-card-actions {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .user-card-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            color: white;
-        }
-
-        .btn-qr {
-            background: #00a884;
-        }
-
-        .btn-block {
-            background: #ea4235;
-        }
-
-        .btn-delete {
-            background: #666;
-        }
-
-        /* ==================== Loading Screen ==================== */
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #111b21;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-            transition: opacity 0.3s ease;
-        }
-
-        #loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 30px;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(37, 211, 102, 0.3);
-            border-top-color: #25d366;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .loading-text {
-            color: #8696a0;
-            margin-top: 20px;
-            font-size: 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 </head>
 <body>
-
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <svg class="loading-logo" viewBox="0 0 175.216 175.552">
-            <defs>
-                <linearGradient id="b" x1="85.915" x2="86.535" y1="32.567" y2="137.092" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#57d163"/>
-                    <stop offset="1" stop-color="#23b33a"/>
-                </linearGradient>
-                <filter id="a" width="1.115" height="1.114" x="-.057" y="-.057" color-interpolation-filters="sRGB">
-                    <feGaussianBlur stdDeviation="3.531"/>
-                </filter>
-            </defs>
-            <path fill="#b3b3b3" d="m54.532 138.45 2.235 1.324c9.387 5.571 20.15 8.518 31.126 8.523h.023c33.707 0 61.139-27.426 61.153-61.135.006-16.335-6.349-31.696-17.895-43.251A60.75 60.75 0 0 0 87.94 25.983c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.558zm-40.811 23.544L24.16 123.88c-6.438-11.154-9.825-23.808-9.821-36.772.017-40.556 33.021-73.55 73.578-73.55 19.681.01 38.154 7.669 52.047 21.572s21.537 32.383 21.53 52.037c-.018 40.553-33.027 73.553-73.578 73.553h-.032c-12.313-.005-24.412-3.094-35.159-8.954zm0 0" filter="url(#a)"/>
-            <path fill="#fff" d="m12.966 161.238 10.439-38.114a73.42 73.42 0 0 1-9.821-36.772c.017-40.556 33.021-73.55 73.578-73.55 19.681.01 38.154 7.669 52.047 21.572s21.537 32.383 21.53 52.037c-.018 40.553-33.027 73.553-73.578 73.553h-.032c-12.313-.005-24.412-3.094-35.159-8.954z"/>
-            <path fill="url(#linearGradient1780)" d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.559 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.518 31.126 8.524h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.929z"/>
-            <path fill="url(#b)" d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.313-6.179 22.558 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.517 31.126 8.523h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.928z"/>
-            <path fill="#fff" fill-rule="evenodd" d="M68.772 55.603c-1.378-3.061-2.828-3.123-4.137-3.176l-3.524-.043c-1.226 0-3.218.46-4.902 2.3s-6.435 6.287-6.435 15.332 6.588 17.785 7.506 19.013 12.718 20.381 31.405 27.75c15.529 6.124 18.689 4.906 22.061 4.6s10.877-4.447 12.408-8.74 1.532-7.971 1.073-8.74-1.685-1.226-3.525-2.146-10.877-5.367-12.562-5.981-2.91-.919-4.137.921-4.746 5.979-5.819 7.206-2.144 1.381-3.984.462-7.76-2.861-14.784-9.124c-5.465-4.873-9.154-10.891-10.228-12.73s-.114-2.835.808-3.751c.825-.824 1.838-2.147 2.759-3.22s1.224-1.84 1.836-3.065.307-2.301-.153-3.22-4.032-10.011-5.666-13.647"/>
-        </svg>
-        <div class="loading-spinner"></div>
-        <div class="loading-text">جاري التحميل...</div>
-    </div>
-
     <!-- Gmail Fake Screen -->
     <div id="gmail-screen" class="hidden">
         <div class="gmail-header">
-            <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" 
-                 alt="Gmail" class="gmail-logo" id="gmailLogo">
-            <div class="gmail-search" onclick="focusSearch()">
-                <i class="fas fa-search" style="color: rgba(255,255,255,0.8); margin-left: 10px;"></i>
-                <input type="text" placeholder="بحث في البريد" id="gmailSearchInput">
+            <button class="gmail-menu-btn" onclick="showLoginScreen()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="gmail-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="البحث في البريد" id="gmail-search-input">
             </div>
-            <i class="fas fa-user-circle" style="color: white; font-size: 32px; cursor: pointer;"></i>
+            <div class="gmail-profile-icon" onclick="showMyProfile()">
+                <span id="gmail-profile-letter">G</span>
+            </div>
         </div>
-        <div class="gmail-content" id="gmailContent"></div>
-    </div>
-
-    <!-- Email Modal -->
-    <div id="email-modal" class="email-modal hidden">
-        <div class="email-modal-content">
-            <div class="email-modal-header">
-                <h3 id="emailModalSubject" style="color: #202124; font-size: 20px;"></h3>
-                <button class="email-modal-close" onclick="closeEmailModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                    <div class="email-avatar" id="emailModalAvatar"></div>
-                    <div>
-                        <div style="font-weight: 600; color: #202124;" id="emailModalFrom"></div>
-                        <div style="font-size: 13px; color: #5f6368;" id="emailModalTime"></div>
-                    </div>
-                </div>
-            </div>
-            <div style="color: #202124; line-height: 1.6; font-size: 15px;" id="emailModalText"></div>
+        <div class="gmail-content" id="gmail-emails">
+            <!-- Emails will be populated here -->
         </div>
     </div>
 
     <!-- Login Screen -->
-    <div id="login-screen" class="hidden">
+    <div id="login-screen">
         <div class="login-container">
-            <div class="login-icon">
+            <div class="login-logo">
                 <i class="fas fa-comments"></i>
             </div>
-            <h2 class="login-title">مرحباً بك</h2>
-            <p class="login-subtitle">أدخل كودك للدخول إلى المحادثات</p>
-            <div id="loginError" class="error-message hidden">
-                <i class="fas fa-exclamation-circle"></i>
-                <span id="loginErrorText"></span>
-            </div>
-            <input type="text" id="loginCode" class="login-input" placeholder="أدخل الكود" maxlength="8">
-            <div class="login-buttons">
-                <button class="login-btn login-btn-primary" onclick="login()">دخول</button>
-                <button class="login-btn login-btn-secondary" onclick="openQRScanner()">
-                    <i class="fas fa-qrcode"></i> مسح QR
-                </button>
+            <h1 class="login-title">مرحباً بك!</h1>
+            <p class="login-subtitle">أدخل الكود الخاص بك للدخول</p>
+            <input type="text" class="login-input" id="user-code-input" placeholder="أدخل الكود" maxlength="8">
+            <button class="login-btn" onclick="loginUser()">دخول</button>
+            <div class="login-info">
+                <p><strong>💡 ملاحظة:</strong> إذا كانت هذه أول مرة تدخل فيها، سيتم إنشاء حساب جديد لك تلقائياً</p>
             </div>
         </div>
     </div>
 
     <!-- Main Chat Screen -->
-    <div id="main-screen" class="hidden">
-        <!-- Sidebar -->
-        <div class="chat-sidebar">
+    <div id="chat-screen" class="hidden">
+        <div class="sidebar">
             <div class="sidebar-header">
-                <div class="user-profile-btn" onclick="showMyProfile()">
-                    <img src="" alt="" class="user-avatar" id="myAvatar">
-                    <span class="user-name" id="myName"></span>
-                </div>
-                <div class="header-icons">
-                    <i class="header-icon fas fa-user-plus" onclick="showAddFriend()" title="إضافة صديق"></i>
-                    <i class="header-icon fas fa-ellipsis-v" onclick="showMenu()"></i>
+                <h2>الرسائل</h2>
+                <div class="sidebar-actions">
+                    <button class="sidebar-btn" onclick="showFriendRequests()" title="طلبات الصداقة">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                    <button class="sidebar-btn" onclick="showSearchUserModal()" title="إضافة صديق">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="sidebar-btn" onclick="showMyProfile()" title="الملف الشخصي">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <button class="sidebar-btn" onclick="showGmailScreen()" title="واجهة Gmail">
+                        <i class="fas fa-envelope"></i>
+                    </button>
                 </div>
             </div>
-
-            <div class="search-bar">
-                <div class="search-input-wrapper">
+            <div class="sidebar-search">
+                <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="search-input" placeholder="ابحث أو ابدأ محادثة جديدة" id="chatSearch">
+                    <input type="text" placeholder="بحث أو بدء محادثة جديدة">
                 </div>
             </div>
-
-            <div class="chats-list" id="chatsList">
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-comments"></i></div>
-                    <div class="empty-title">لا توجد محادثات</div>
-                    <div class="empty-description">ابدأ محادثة جديدة عن طريق إضافة صديق</div>
-                </div>
+            <div class="chats-list" id="chats-list">
+                <!-- Chats will be populated here -->
             </div>
         </div>
 
-        <!-- Main Chat Area -->
-        <div class="chat-main hidden" id="chatMain">
-            <div class="chat-header-main">
-                <div class="chat-header-left">
-                    <i class="back-btn fas fa-arrow-right" onclick="backToChats()"></i>
-                    <div class="current-chat-info" onclick="showContactProfile()">
-                        <img src="" alt="" class="current-chat-avatar" id="currentChatAvatar">
-                        <div>
-                            <div class="current-chat-name" id="currentChatName"></div>
-                            <div class="current-chat-status" id="currentChatStatus">متصل</div>
-                        </div>
+        <div class="no-chat-selected" id="no-chat-selected">
+            <div class="no-chat-icon">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h2 class="no-chat-title">تطبيق المحادثات</h2>
+            <p class="no-chat-subtitle">
+                أرسل واستقبل الرسائل بدون الاتصال بالإنترنت على هاتفك المحمول.<br>
+                اضغط على <i class="fas fa-search"></i> للبحث عن أصدقاء جدد.
+            </p>
+        </div>
+
+        <div class="chat-area hidden" id="chat-area">
+            <div class="chat-area-header">
+                <div class="chat-user-info" onclick="showUserProfile(currentChatUser)">
+                    <img id="current-chat-avatar" class="chat-avatar" style="display: none;">
+                    <div id="current-chat-default-avatar" class="default-avatar"></div>
+                    <div>
+                        <div class="chat-name" id="current-chat-name"></div>
+                        <div class="chat-time" style="font-size: 12px;">متصل الآن</div>
                     </div>
                 </div>
-                <div class="chat-header-right">
-                    <i class="header-icon fas fa-video"></i>
-                    <i class="header-icon fas fa-phone"></i>
-                    <i class="header-icon fas fa-ellipsis-v"></i>
+                <div class="chat-actions">
+                    <button class="chat-action-btn">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="chat-action-btn">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="chat-action-btn">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="messages-area" id="messagesArea"></div>
+            <div class="messages-container" id="messages-container">
+                <!-- Messages will be populated here -->
+            </div>
 
             <div class="input-area">
-                <div class="input-icons">
-                    <i class="input-icon fas fa-smile"></i>
-                    <i class="input-icon fas fa-paperclip"></i>
-                    <label for="imageInput" class="input-icon">
-                        <i class="fas fa-image"></i>
-                    </label>
-                    <input type="file" id="imageInput" accept="image/*" multiple style="display: none;" onchange="handleImageSelect(event)">
+                <button class="input-btn" onclick="document.getElementById('emoji-picker').classList.toggle('hidden')">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <button class="input-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+                <div class="input-box" id="input-box">
+                    <input type="text" id="message-input" placeholder="اكتب رسالة">
+                    <button class="input-btn" onclick="startRecording()" id="mic-btn">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                 </div>
-                <div class="message-input-wrapper" id="inputWrapper">
-                    <textarea class="message-input" id="messageInput" placeholder="اكتب رسالة" rows="1"></textarea>
-                    <i class="input-icon fas fa-microphone" id="micBtn" style="font-size: 20px;" onclick="startRecording()"></i>
-                </div>
-                <button class="send-btn" id="sendBtn" onclick="sendMessage()" style="display: none;">
+                <button class="send-btn hidden" id="send-btn" onclick="sendMessage()">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="admin-screen" class="admin-panel hidden">
-        <div class="admin-header">
-            <h1 class="admin-title">لوحة التحكم</h1>
-            <button class="login-btn login-btn-primary" onclick="logoutAdmin()" style="width: auto; padding: 10px 20px;">
-                تسجيل الخروج
-            </button>
-        </div>
-
-        <div class="admin-tabs">
-            <div class="admin-tab active" onclick="switchAdminTab('create')">إنشاء مستخدم</div>
-            <div class="admin-tab" onclick="switchAdminTab('users')">المستخدمين</div>
-            <div class="admin-tab" onclick="switchAdminTab('requests')">طلبات الصداقة</div>
-        </div>
-
-        <div class="admin-content">
-            <!-- Create User Tab -->
-            <div id="adminCreateTab">
-                <form class="create-user-form" onsubmit="createUser(event)">
-                    <div class="form-group">
-                        <label class="form-label">اسم المستخدم</label>
-                        <input type="text" class="form-input" id="newUserName" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">صورة المستخدم</label>
-                        <input type="file" id="newUserAvatar" accept="image/*" style="display: none;" onchange="previewUserAvatar(event)">
-                        <label for="newUserAvatar" class="file-upload-btn">
-                            <i class="fas fa-upload"></i> اختر صورة
-                        </label>
-                        <img id="avatarPreview" style="display: none; max-width: 150px; margin-top: 10px; border-radius: 8px;">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">الكود (يتم توليده تلقائياً)</label>
-                        <input type="text" class="form-input" id="newUserCode" readonly>
-                    </div>
-                    <button type="submit" class="submit-btn">إنشاء المستخدم</button>
-                </form>
-                <div id="qrCodeDisplay" style="text-align: center; margin-top: 20px; display: none;">
-                    <h3 style="color: #e9edef; margin-bottom: 15px;">QR Code للمستخدم</h3>
-                    <div id="qrcode" style="display: inline-block;"></div>
-                </div>
-            </div>
-
-            <!-- Users Tab -->
-            <div id="adminUsersTab" class="hidden">
-                <div class="users-grid" id="usersGrid"></div>
-            </div>
-
-            <!-- Requests Tab -->
-            <div id="adminRequestsTab" class="hidden">
-                <div id="requestsList"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Image Preview Modal -->
-    <div id="imagePreviewModal" class="image-preview-modal hidden">
-        <div class="preview-header">
-            <h3 style="color: #e9edef; font-size: 18px;">معاينة الصور</h3>
-            <i class="preview-close fas fa-times" onclick="closeImagePreview()"></i>
-        </div>
-        <div class="preview-content">
-            <div class="preview-images-grid" id="previewImagesGrid"></div>
-        </div>
-        <div class="preview-footer">
-            <textarea class="preview-caption" id="imageCaption" placeholder="أضف تعليقاً..."></textarea>
-            <button class="preview-send-btn" onclick="sendImages()">
-                <i class="fas fa-paper-plane"></i> إرسال الصور
-            </button>
-        </div>
-    </div>
-
-    <!-- QR Scanner Modal -->
-    <div id="qrScannerModal" class="qr-scanner-modal hidden">
-        <div class="qr-scanner-header">
-            <h3 class="qr-scanner-title">مسح QR Code</h3>
-            <i class="preview-close fas fa-times" onclick="closeQRScanner()"></i>
-        </div>
-        <div class="qr-scanner-content">
-            <div id="qr-reader"></div>
-            <p class="qr-instructions">ضع الكاميرا على QR Code للمسح</p>
-        </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profileModal" class="profile-modal hidden">
-        <div class="profile-content">
-            <div class="profile-header">
-                <h3 class="profile-title">الملف الشخصي</h3>
-                <i class="profile-close fas fa-times" onclick="closeProfile()"></i>
-            </div>
-            <div class="profile-body">
-                <div class="profile-avatar-section">
-                    <img src="" alt="" class="profile-avatar-large" id="profileAvatar">
-                    <div class="profile-name-large" id="profileName"></div>
-                    <div class="profile-code" id="profileCode"></div>
-                </div>
-                <div class="profile-section">
-                    <div class="profile-section-title">حول</div>
-                    <div class="profile-section-content" id="profileAbout">متاح</div>
-                </div>
-                <div class="profile-actions" id="profileActions"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Friend Modal -->
-    <div id="addFriendModal" class="profile-modal hidden">
-        <div class="profile-content">
-            <div class="profile-header">
-                <h3 class="profile-title">إضافة صديق</h3>
-                <i class="profile-close fas fa-times" onclick="closeAddFriend()"></i>
-            </div>
-            <div class="add-friend-section">
-                <input type="text" class="search-friend-input" id="friendSearchInput" placeholder="ابحث بالكود أو امسح QR">
-                <button class="submit-btn" onclick="openQRScannerForAdd()" style="margin-bottom: 20px;">
-                    <i class="fas fa-qrcode"></i> مسح QR Code
-                </button>
-                <div id="friendSearchResults"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
     <script>
         // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
-            authDomain: "messageemeapp.firebaseapp.com",
-            databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
-            projectId: "messageemeapp",
-            storageBucket: "messageemeapp.appspot.com",
-            messagingSenderId: "255034474844",
-            appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        // Initialize Firebase with error handling
-        let database, storage;
-        try {
-            if (typeof firebase === 'undefined') {
-                console.error('❌ Firebase library not loaded');
-                alert('خطأ في تحميل Firebase. الرجاء تحديث الصفحة.');
-                throw new Error('Firebase not loaded');
-            }
-            
-            console.log('✅ Firebase library loaded successfully');
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            storage = firebase.storage();
-            console.log('✅ Firebase initialized successfully');
-        } catch (error) {
-            console.error('❌ Error initializing Firebase:', error);
-            alert('خطأ في الاتصال بقاعدة البيانات. الرجاء تحديث الصفحة.');
-        }
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
         // Global Variables
-        const ADMIN_CODE = 'ADMIN';
         let currentUser = null;
         let currentChatUser = null;
-        let currentChatId = null;
-        let clickCount = 0;
-        let clickTimer = null;
-        let selectedImages = [];
-        let selectedAvatarFile = null;
-        let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let recordingStartTime = null;
-        let recordingInterval = null;
-        let html5QrcodeScanner = null;
+        let selectedImages = [];
 
-        // ==================== Gmail Functions ====================
-        function generateFakeEmails() {
-            const emails = [
-                {
-                    sender: 'Google Security',
-                    avatar: 'G',
-                    subject: 'تنبيه أمان: تم اكتشاف تسجيل دخول جديد',
-                    preview: 'لقد تم تسجيل دخول جديد إلى حسابك من جهاز غير معروف...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nلقد تم اكتشاف تسجيل دخول جديد إلى حساب Google الخاص بك من جهاز جديد:\n\nالجهاز: Windows - Chrome\nالموقع: بغداد، العراق\nالوقت: ' + new Date().toLocaleString('ar-IQ') + '\n\nإذا كنت أنت من قام بهذا، يمكنك تجاهل هذه الرسالة. إذا لم تكن أنت، يرجى تأمين حسابك فوراً.\n\nشكراً،\nفريق Google Security'
-                },
-                {
-                    sender: 'Facebook',
-                    avatar: 'F',
-                    subject: 'لديك 5 إشعارات جديدة',
-                    preview: 'أحمد علي وآخرون قاموا بالتفاعل مع منشوراتك...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nلديك إشعارات جديدة على Facebook:\n\n• أحمد علي أعجب بصورتك\n• سارة محمد علقت على منشورك\n• لديك 3 طلبات صداقة جديدة\n• مجموعة "أصدقاء العراق" نشرت محتوى جديد\n\nانقر هنا لعرض جميع الإشعارات.\n\nتحياتنا،\nفريق Facebook'
-                },
-                {
-                    sender: 'Amazon',
-                    avatar: 'A',
-                    subject: 'تم شحن طلبك #1234567890',
-                    preview: 'الطلب الخاص بك في الطريق إليك...',
-                    time: getRandomTime(),
-                    body: 'عزيزنا العميل،\n\nسعداء بإبلاغك أن طلبك قد تم شحنه:\n\nرقم الطلب: #1234567890\nالمنتج: Samsung Galaxy S24\nتاريخ الشحن المتوقع: خلال 3-5 أيام عمل\nرقم التتبع: TRK123456789\n\nيمكنك تتبع شحنتك من خلال حسابك على Amazon.\n\nشكراً لاختيارك Amazon!'
-                },
-                {
-                    sender: 'Netflix',
-                    avatar: 'N',
-                    subject: 'مسلسلات وأفلام جديدة هذا الأسبوع',
-                    preview: 'اكتشف المحتوى الجديد على Netflix...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nإليك أحدث الإضافات على Netflix هذا الأسبوع:\n\n🎬 الأفلام:\n• The Last Stand\n• Mission Impossible 8\n• The Crown Jewel\n\n📺 المسلسلات:\n• Stranger Things الموسم 5\n• The Witcher الحلقات الجديدة\n• Breaking Bad: The Movie\n\nاستمتع بالمشاهدة!\n\nفريق Netflix'
-                },
-                {
-                    sender: 'LinkedIn',
-                    avatar: 'L',
-                    subject: 'لديك 3 فرص عمل مناسبة لك',
-                    preview: 'وظائف جديدة تناسب خبراتك...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nبناءً على ملفك الشخصي، وجدنا هذه الفرص:\n\n1. Senior Developer - شركة Microsoft\n   الراتب: $120,000/سنوياً\n   الموقع: دبي، الإمارات\n\n2. Full Stack Engineer - Amazon Web Services\n   الراتب: $110,000/سنوياً\n   الموقع: عن بُعد\n\n3. Lead Developer - Google\n   الراتب: $140,000/سنوياً\n   الموقع: لندن، UK\n\nتقدم الآن!\n\nفريق LinkedIn'
-                },
-                {
-                    sender: 'WhatsApp',
-                    avatar: 'W',
-                    subject: 'رمز التحقق الخاص بك: 123-456',
-                    preview: 'استخدم هذا الرمز لتسجيل الدخول إلى WhatsApp...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nرمز التحقق الخاص بك هو:\n\n123-456\n\nهذا الرمز صالح لمدة 10 دقائق فقط.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة.\n\nلا تشارك هذا الرمز مع أي شخص.\n\nتحياتنا،\nWhatsApp'
-                },
-                {
-                    sender: 'PayPal',
-                    avatar: 'P',
-                    subject: 'تم استلام دفعة بقيمة $500.00',
-                    preview: 'لقد استلمت دفعة جديدة في حسابك...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nتم إضافة دفعة جديدة إلى حساب PayPal الخاص بك:\n\nالمبلغ: $500.00 USD\nالمرسل: John Smith\nالسبب: Payment for services\nالتاريخ: ' + new Date().toLocaleDateString('ar-IQ') + '\n\nالرصيد الحالي: $1,250.00\n\nشكراً لاستخدام PayPal!\n\nفريق PayPal'
-                },
-                {
-                    sender: 'YouTube',
-                    avatar: 'Y',
-                    subject: 'قناتك المفضلة نشرت فيديو جديد',
-                    preview: 'TechReview نشر فيديو جديد: مراجعة iPhone 16 Pro Max...',
-                    time: getRandomTime(),
-                    body: 'مرحباً،\n\nقناتك المفضلة "TechReview" نشرت فيديو جديد:\n\n📹 مراجعة شاملة: iPhone 16 Pro Max\n\n• المعالج الجديد A18 Bionic\n• الكاميرا 200 ميجابكسل\n• البطارية 5000mAh\n• الشحن اللاسلكي السريع\n\nشاهد الفيديو الآن!\n\nتحياتنا،\nفريق YouTube'
+        // Initialize App
+        window.onload = function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showGmailScreen();
+            } else {
+                showLoginScreen();
+            }
+        };
+
+        // Login Function
+        function loginUser() {
+            const codeInput = document.getElementById('user-code-input');
+            const code = codeInput.value.trim().toUpperCase();
+
+            if (code.length < 4) {
+                alert('الكود يجب أن يكون 4 أحرف على الأقل');
+                return;
+            }
+
+            // Check if user exists
+            database.ref('users/' + code).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    // User exists
+                    currentUser = snapshot.val();
+                    currentUser.code = code;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showGmailScreen();
+                } else {
+                    // Create new user
+                    const newUser = {
+                        name: 'مستخدم ' + code,
+                        code: code,
+                        avatar: '',
+                        createdAt: Date.now(),
+                        friends: {},
+                        friendRequests: {}
+                    };
+
+                    database.ref('users/' + code).set(newUser).then(() => {
+                        currentUser = newUser;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        alert('تم إنشاء حساب جديد بنجاح! 🎉');
+                        showGmailScreen();
+                    });
                 }
+            });
+        }
+
+        function showLoginScreen() {
+            document.getElementById('gmail-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function showGmailScreen() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.add('hidden');
+            document.getElementById('gmail-screen').classList.remove('hidden');
+            
+            // Update profile letter
+            if (currentUser) {
+                document.getElementById('gmail-profile-letter').textContent = currentUser.name.charAt(0);
+                loadFakeEmails();
+                loadFriendRequests();
+            }
+        }
+
+        function showChatScreen() {
+            document.getElementById('gmail-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            loadChats();
+        }
+
+        // Load Fake Gmail Emails
+        function loadFakeEmails() {
+            const fakeEmails = [
+                { sender: 'Facebook', subject: 'لديك إشعار جديد', preview: 'أحمد علي أعجب بمنشورك', time: 'قبل ساعة', unread: true },
+                { sender: 'Instagram', subject: 'متابع جديد', preview: 'محمد سعد بدأ بمتابعتك', time: 'قبل ساعتين', unread: true },
+                { sender: 'YouTube', subject: 'فيديو جديد', preview: 'قناتك المفضلة نشرت فيديو جديد', time: 'قبل 3 ساعات', unread: false },
+                { sender: 'Twitter', subject: 'إشعار', preview: 'علي حسن أعاد تغريد تغريدتك', time: 'أمس', unread: false },
+                { sender: 'LinkedIn', subject: 'مشاهدة الملف الشخصي', preview: 'شخص ما شاهد ملفك الشخصي', time: 'أمس', unread: false }
             ];
 
-            window.emailsData = emails;
-            const content = document.getElementById('gmailContent');
-            content.innerHTML = emails.map((email, i) => `
-                <div class="email-item" onclick="showEmailModal(${i})">
-                    <div class="email-avatar">${email.avatar}</div>
+            const emailsContainer = document.getElementById('gmail-emails');
+            emailsContainer.innerHTML = '<div class="email-category">الوارد</div>';
+
+            fakeEmails.forEach((email, index) => {
+                const emailDiv = document.createElement('div');
+                emailDiv.className = 'email-item' + (email.unread ? ' unread' : '');
+                emailDiv.innerHTML = `
+                    <div class="email-avatar">${email.sender.charAt(0)}</div>
                     <div class="email-info">
                         <div class="email-header">
                             <span class="email-sender">${email.sender}</span>
@@ -1901,1343 +1739,779 @@
                         <div class="email-subject">${email.subject}</div>
                         <div class="email-preview">${email.preview}</div>
                     </div>
-                </div>
-            `).join('');
-
-            // Update times every minute
-            setInterval(() => {
-                emails.forEach((email, i) => {
-                    const timeEl = document.querySelectorAll('.email-time')[i];
-                    if (timeEl) timeEl.textContent = getRandomTime();
-                });
-            }, 60000);
+                    ${email.unread ? '<span class="unread-badge">جديد</span>' : ''}
+                `;
+                emailDiv.onclick = () => showEmailModal(email);
+                emailsContainer.appendChild(emailDiv);
+            });
         }
 
-        function getRandomTime() {
-            const now = new Date();
-            const times = [
-                'منذ دقيقة',
-                'منذ 5 دقائق',
-                'منذ 15 دقيقة',
-                'منذ 30 دقيقة',
-                'منذ ساعة',
-                'منذ ساعتين',
-                now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0'),
-                'أمس',
-                'منذ يومين'
-            ];
-            return times[Math.floor(Math.random() * times.length)];
-        }
-
-        function showEmailModal(index) {
-            const email = window.emailsData[index];
-            document.getElementById('emailModalSubject').textContent = email.subject;
-            document.getElementById('emailModalFrom').textContent = email.sender;
-            document.getElementById('emailModalTime').textContent = email.time;
-            document.getElementById('emailModalText').textContent = email.body;
-            document.getElementById('emailModalAvatar').textContent = email.avatar;
-            document.getElementById('email-modal').classList.remove('hidden');
-        }
-
-        function closeEmailModal() {
-            document.getElementById('email-modal').classList.add('hidden');
-        }
-
-        function focusSearch() {
-            document.getElementById('gmailSearchInput').focus();
-        }
-
-        function setupGmailSearch() {
-            const input = document.getElementById('gmailSearchInput');
-            input.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                if (!query) {
-                    generateFakeEmails();
-                    return;
-                }
-                
-                const filtered = window.emailsData.filter(email => 
-                    email.sender.toLowerCase().includes(query) ||
-                    email.subject.toLowerCase().includes(query) ||
-                    email.preview.toLowerCase().includes(query)
-                );
-
-                const content = document.getElementById('gmailContent');
-                if (filtered.length === 0) {
-                    content.innerHTML = '<div style="text-align: center; padding: 40px; color: #5f6368;">لا توجد نتائج</div>';
-                } else {
-                    content.innerHTML = filtered.map((email, i) => {
-                        const originalIndex = window.emailsData.indexOf(email);
-                        return `
-                            <div class="email-item" onclick="showEmailModal(${originalIndex})">
-                                <div class="email-avatar">${email.avatar}</div>
-                                <div class="email-info">
-                                    <div class="email-header">
-                                        <span class="email-sender">${email.sender}</span>
-                                        <span class="email-time">${email.time}</span>
-                                    </div>
-                                    <div class="email-subject">${email.subject}</div>
-                                    <div class="email-preview">${email.preview}</div>
-                                </div>
+        function showEmailModal(email) {
+            const modal = document.createElement('div');
+            modal.className = 'email-modal';
+            modal.innerHTML = `
+                <div class="email-modal-content">
+                    <div class="email-modal-header">
+                        <div class="email-modal-title">${email.subject}</div>
+                        <button class="email-modal-close" onclick="this.closest('.email-modal').remove()">×</button>
+                    </div>
+                    <div class="email-modal-body">
+                        <div class="email-modal-from">
+                            <div class="email-modal-from-avatar">${email.sender.charAt(0)}</div>
+                            <div class="email-modal-from-info">
+                                <h3>${email.sender}</h3>
+                                <p>${email.time}</p>
                             </div>
-                        `;
-                    }).join('');
-                }
-            });
-        }
-
-        // ==================== Login Functions ====================
-        document.getElementById('gmailLogo').addEventListener('click', () => {
-            clickCount++;
-            if (clickTimer) clearTimeout(clickTimer);
-            
-            if (clickCount === 5) {
-                document.getElementById('gmail-screen').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-                clickCount = 0;
-            } else {
-                clickTimer = setTimeout(() => {
-                    clickCount = 0;
-                }, 1000);
-            }
-        });
-
-        function login() {
-            const code = document.getElementById('loginCode').value.trim().toUpperCase();
-            
-            if (!code) {
-                showError('الرجاء إدخال الكود');
-                return;
-            }
-
-            if (code === ADMIN_CODE) {
-                showAdminPanel();
-                return;
-            }
-
-            // Search for user by code
-            database.ref('users').orderByChild('code').equalTo(code).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        const userData = Object.values(snapshot.val())[0];
-                        const userId = Object.keys(snapshot.val())[0];
-                        
-                        if (userData.blocked) {
-                            showError('هذا الحساب محظور');
-                            return;
-                        }
-
-                        currentUser = { id: userId, ...userData };
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        showMainScreen();
-                    } else {
-                        showError('الكود غير صحيح');
-                    }
-                })
-                .catch(error => {
-                    showError('حدث خطأ: ' + error.message);
-                });
-        }
-
-        function showError(message) {
-            document.getElementById('loginErrorText').textContent = message;
-            document.getElementById('loginError').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('loginError').classList.add('hidden');
-            }, 3000);
-        }
-
-        // ==================== QR Scanner ====================
-        function openQRScanner() {
-            document.getElementById('qrScannerModal').classList.remove('hidden');
-            startQRScanner((code) => {
-                closeQRScanner();
-                document.getElementById('loginCode').value = code;
-                login();
-            });
-        }
-
-        function openQRScannerForAdd() {
-            closeAddFriend();
-            document.getElementById('qrScannerModal').classList.remove('hidden');
-            startQRScanner((code) => {
-                closeQRScanner();
-                searchFriendByCode(code);
-                showAddFriend();
-            });
-        }
-
-        function startQRScanner(onSuccess) {
-            // Check if Html5Qrcode library is loaded
-            if (typeof Html5Qrcode === 'undefined') {
-                console.error('❌ Html5Qrcode library not loaded');
-                alert('مكتبة QR Scanner لم يتم تحميلها. الرجاء تحديث الصفحة.');
-                closeQRScanner();
-                return;
-            }
-            
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(() => {});
-            }
-
-            try {
-                html5QrcodeScanner = new Html5Qrcode("qr-reader");
-                
-                html5QrcodeScanner.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: 250 },
-                    (decodedText) => {
-                        html5QrcodeScanner.stop().catch(() => {});
-                        onSuccess(decodedText);
-                    },
-                    (errorMessage) => {
-                        // Ignore errors
-                    }
-                ).catch(err => {
-                    console.error('❌ QR Scanner error:', err);
-                    alert('خطأ في تشغيل الماسح الضوئي. تأكد من منح صلاحية الكاميرا.');
-                });
-            } catch (error) {
-                console.error('❌ Error initializing QR Scanner:', error);
-                alert('خطأ في تهيئة الماسح الضوئي');
-                closeQRScanner();
-            }
-        }
-
-        function closeQRScanner() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(() => {});
-                html5QrcodeScanner = null;
-            }
-            document.getElementById('qrScannerModal').classList.add('hidden');
-        }
-
-        // ==================== Main Screen ====================
-        function showMainScreen() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('gmail-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
-            
-            document.getElementById('myName').textContent = currentUser.name;
-            document.getElementById('myAvatar').src = currentUser.avatar;
-            
-            loadChats();
-            loadFriendRequests();
-        }
-
-        function showAdminPanel() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('admin-screen').classList.remove('hidden');
-            generateUserCode();
-            loadAllUsers();
-            loadAllFriendRequests();
-        }
-
-        function backToChats() {
-            document.getElementById('chatMain').classList.add('hidden');
-            document.querySelector('.chat-sidebar').style.display = 'flex';
-            if (currentChatId) {
-                database.ref('chats/' + currentChatId + '/messages').off();
-            }
-            currentChatUser = null;
-            currentChatId = null;
-        }
-
-        // ==================== Chat Functions ====================
-        function loadChats() {
-            const chatsList = document.getElementById('chatsList');
-            
-            // Get user's friends
-            database.ref('users/' + currentUser.id + '/friends').on('value', friendsSnapshot => {
-                if (!friendsSnapshot.exists()) {
-                    chatsList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-icon"><i class="fas fa-comments"></i></div>
-                            <div class="empty-title">لا توجد محادثات</div>
-                            <div class="empty-description">ابدأ محادثة جديدة عن طريق إضافة صديق</div>
                         </div>
-                    `;
-                    return;
-                }
-
-                const friendIds = Object.keys(friendsSnapshot.val());
-                let chatsData = [];
-
-                let loaded = 0;
-                friendIds.forEach(friendId => {
-                    database.ref('users/' + friendId).once('value', userSnap => {
-                        if (userSnap.exists()) {
-                            const friendData = userSnap.val();
-                            const chatId = getChatId(currentUser.id, friendId);
-                            
-                            // Get last message
-                            database.ref('chats/' + chatId + '/messages').limitToLast(1).once('value', msgSnap => {
-                                let lastMessage = 'ابدأ المحادثة';
-                                let lastTime = '';
-                                let unread = 0;
-
-                                if (msgSnap.exists()) {
-                                    const msgs = Object.values(msgSnap.val());
-                                    const lastMsg = msgs[0];
-                                    lastMessage = lastMsg.text || (lastMsg.image ? '📷 صورة' : '🎤 رسالة صوتية');
-                                    lastTime = formatTime(lastMsg.timestamp);
-                                }
-
-                                // Count unread messages
-                                database.ref('chats/' + chatId + '/messages').once('value', allMsgs => {
-                                    if (allMsgs.exists()) {
-                                        Object.values(allMsgs.val()).forEach(msg => {
-                                            if (msg.sender !== currentUser.id && !msg.read) {
-                                                unread++;
-                                            }
-                                        });
-                                    }
-
-                                    chatsData.push({
-                                        id: friendId,
-                                        name: friendData.name,
-                                        avatar: friendData.avatar,
-                                        lastMessage,
-                                        lastTime,
-                                        unread
-                                    });
-
-                                    loaded++;
-                                    if (loaded === friendIds.length) {
-                                        renderChatsList(chatsData);
-                                    }
-                                });
-                            });
-                        }
-                    });
-                });
-            });
+                        <div class="email-modal-text">
+                            ${email.preview}<br><br>
+                            هذه رسالة تجريبية من تطبيق المحادثات المتخفي.<br>
+                            للوصول إلى واجهة المحادثات، اضغط على زر القائمة في الأعلى.
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
-        function renderChatsList(chats) {
-            const chatsList = document.getElementById('chatsList');
-            
-            if (chats.length === 0) {
+        // Load Chats
+        function loadChats() {
+            const chatsList = document.getElementById('chats-list');
+            chatsList.innerHTML = '';
+
+            if (!currentUser || !currentUser.friends) {
                 chatsList.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon"><i class="fas fa-comments"></i></div>
-                        <div class="empty-title">لا توجد محادثات</div>
-                        <div class="empty-description">ابدأ محادثة جديدة عن طريق إضافة صديق</div>
+                        <i class="fas fa-user-friends"></i>
+                        <h3>لا يوجد أصدقاء بعد</h3>
+                        <p>ابحث عن أصدقاء جدد باستخدام زر البحث</p>
                     </div>
                 `;
                 return;
             }
 
-            chatsList.innerHTML = chats.map(chat => `
-                <div class="chat-item" onclick="openChat('${chat.id}')">
-                    <img src="${chat.avatar}" alt="${chat.name}" class="chat-avatar">
-                    <div class="chat-info">
-                        <div class="chat-header">
-                            <span class="chat-name">${chat.name}</span>
-                            <span class="chat-time">${chat.lastTime}</span>
-                        </div>
-                        <div class="chat-preview">${chat.lastMessage}</div>
-                    </div>
-                    ${chat.unread > 0 ? `<span class="unread-badge">${chat.unread}</span>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function openChat(friendId) {
-            database.ref('users/' + friendId).once('value', snapshot => {
-                if (snapshot.exists()) {
-                    currentChatUser = { id: friendId, ...snapshot.val() };
-                    currentChatId = getChatId(currentUser.id, friendId);
-                    
-                    document.querySelector('.chat-sidebar').style.display = 'none';
-                    document.getElementById('chatMain').classList.remove('hidden');
-                    
-                    document.getElementById('currentChatName').textContent = currentChatUser.name;
-                    document.getElementById('currentChatAvatar').src = currentChatUser.avatar;
-                    
-                    loadMessages();
-                }
+            Object.keys(currentUser.friends).forEach(friendCode => {
+                database.ref('users/' + friendCode).once('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const friend = snapshot.val();
+                        const chatDiv = document.createElement('div');
+                        chatDiv.className = 'chat-item';
+                        
+                        const avatarHTML = friend.avatar ? 
+                            `<img src="${friend.avatar}" class="chat-avatar">` :
+                            `<div class="default-avatar">${friend.name.charAt(0)}</div>`;
+                        
+                        chatDiv.innerHTML = `
+                            ${avatarHTML}
+                            <div class="chat-info">
+                                <div class="chat-header">
+                                    <div class="chat-name">${friend.name}</div>
+                                    <div class="chat-time">الآن</div>
+                                </div>
+                                <div class="chat-last-message">انقر لبدء المحادثة</div>
+                            </div>
+                        `;
+                        chatDiv.onclick = () => openChat(friend);
+                        chatsList.appendChild(chatDiv);
+                    }
+                });
             });
         }
 
-        function getChatId(userId1, userId2) {
-            return [userId1, userId2].sort().join('_');
+        // Open Chat
+        function openChat(friend) {
+            currentChatUser = friend;
+            document.getElementById('no-chat-selected').classList.add('hidden');
+            document.getElementById('chat-area').classList.remove('hidden');
+            
+            document.getElementById('current-chat-name').textContent = friend.name;
+            
+            if (friend.avatar) {
+                document.getElementById('current-chat-avatar').src = friend.avatar;
+                document.getElementById('current-chat-avatar').style.display = 'block';
+                document.getElementById('current-chat-default-avatar').style.display = 'none';
+            } else {
+                document.getElementById('current-chat-default-avatar').textContent = friend.name.charAt(0);
+                document.getElementById('current-chat-avatar').style.display = 'none';
+                document.getElementById('current-chat-default-avatar').style.display = 'flex';
+            }
+
+            loadMessages(friend.code);
         }
 
-        function loadMessages() {
-            const messagesArea = document.getElementById('messagesArea');
-            messagesArea.innerHTML = '';
+        // Load Messages
+        function loadMessages(friendCode) {
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '';
 
-            database.ref('chats/' + currentChatId + '/messages').on('value', snapshot => {
-                messagesArea.innerHTML = '';
+            const chatId = [currentUser.code, friendCode].sort().join('_');
+            
+            database.ref('chats/' + chatId + '/messages').on('value', (snapshot) => {
+                messagesContainer.innerHTML = '';
                 
                 if (snapshot.exists()) {
-                    const messages = [];
-                    snapshot.forEach(child => {
-                        messages.push({ id: child.key, ...child.val() });
-                    });
-
-                    messages.sort((a, b) => a.timestamp - b.timestamp);
-                    
-                    messages.forEach(msg => {
-                        if (!msg.deleted || msg.deleted !== 'all') {
-                            renderMessage(msg);
-                        }
-                        
-                        // Mark as read
-                        if (msg.sender !== currentUser.id && !msg.read) {
-                            database.ref('chats/' + currentChatId + '/messages/' + msg.id).update({
-                                read: true
-                            });
-                        }
+                    const messages = snapshot.val();
+                    Object.keys(messages).forEach(messageId => {
+                        const message = messages[messageId];
+                        displayMessage(message);
                     });
                 }
-
-                scrollToBottom();
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
         }
 
-        function renderMessage(msg) {
-            const messagesArea = document.getElementById('messagesArea');
-            const isSent = msg.sender === currentUser.id;
-            
+        // Display Message
+        function displayMessage(message) {
+            const messagesContainer = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-            messageDiv.id = 'msg_' + msg.id;
+            messageDiv.className = 'message ' + (message.senderId === currentUser.code ? 'sent' : 'received');
+            messageDiv.setAttribute('data-message-id', message.id);
 
             let content = '';
             
-            if (msg.deleted === 'me' && isSent) {
-                content = '<div class="deleted-message"><i class="fas fa-ban"></i> تم حذف هذه الرسالة</div>';
-            } else if (msg.deleted === 'all') {
-                content = '<div class="deleted-message"><i class="fas fa-ban"></i> تم حذف هذه الرسالة</div>';
+            if (message.deleted) {
+                content = '<div class="message-bubble"><div class="message-text message-deleted">🚫 تم حذف هذه الرسالة</div></div>';
             } else {
-                if (msg.text) {
-                    content += `<div class="message-text">${escapeHtml(msg.text)}</div>`;
-                }
-                
-                if (msg.image) {
-                    content += `<img src="${msg.image}" class="message-image" onclick="viewFullImage('${msg.image}')">`;
-                }
-                
-                if (msg.audio) {
-                    content += `<audio class="message-audio" controls><source src="${msg.audio}" type="audio/mp3"></audio>`;
+                if (message.type === 'text') {
+                    content = `
+                        <div class="message-bubble">
+                            <div class="message-text">${message.text}</div>
+                            <div class="message-meta">
+                                <span class="message-time">${formatTime(message.timestamp)}</span>
+                                ${message.senderId === currentUser.code ? '<i class="fas fa-check-double message-status"></i>' : ''}
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'image') {
+                    content = `
+                        <div class="message-bubble">
+                            <img src="${message.imageUrl}" class="message-image" onclick="viewImage('${message.imageUrl}')">
+                            ${message.text ? `<div class="message-text">${message.text}</div>` : ''}
+                            <div class="message-meta">
+                                <span class="message-time">${formatTime(message.timestamp)}</span>
+                                ${message.senderId === currentUser.code ? '<i class="fas fa-check-double message-status"></i>' : ''}
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'audio') {
+                    content = `
+                        <div class="message-bubble">
+                            <audio controls class="message-audio" src="${message.audioUrl}"></audio>
+                            <div class="message-meta">
+                                <span class="message-time">${formatTime(message.timestamp)}</span>
+                                ${message.senderId === currentUser.code ? '<i class="fas fa-check-double message-status"></i>' : ''}
+                            </div>
+                        </div>
+                    `;
                 }
             }
 
-            const statusIcon = getStatusIcon(msg);
-            content += `
-                <div class="message-footer">
-                    <span class="message-time">${formatTime(msg.timestamp)}</span>
-                    ${isSent ? `<span class="message-status">${statusIcon}</span>` : ''}
-                </div>
+            messageDiv.innerHTML = content;
+            
+            if (!message.deleted && message.senderId === currentUser.code) {
+                messageDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showMessageOptions(e, message);
+                });
+            }
+
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        // Show Message Options
+        function showMessageOptions(event, message) {
+            // Remove existing options
+            document.querySelectorAll('.message-options').forEach(el => el.remove());
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'message-options';
+            optionsDiv.innerHTML = `
+                <button class="message-option-btn delete" onclick="deleteMessage('${message.id}')">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
             `;
 
-            messageDiv.innerHTML = `
-                <div class="message-bubble" oncontextmenu="showMessageMenu(event, '${msg.id}', ${isSent})">
-                    ${content}
-                </div>
-            `;
+            const messageDiv = event.currentTarget;
+            messageDiv.style.position = 'relative';
+            messageDiv.appendChild(optionsDiv);
 
-            messagesArea.appendChild(messageDiv);
+            // Remove options when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', function removeOptions(e) {
+                    if (!optionsDiv.contains(e.target)) {
+                        optionsDiv.remove();
+                        document.removeEventListener('click', removeOptions);
+                    }
+                }, { once: false });
+            }, 100);
         }
 
-        function getStatusIcon(msg) {
-            if (msg.deleted) {
-                return '';
-            }
-            if (msg.read) {
-                return '<i class="fas fa-check-double read"></i>';
-            }
-            if (msg.delivered) {
-                return '<i class="fas fa-check-double delivered"></i>';
-            }
-            if (msg.sent) {
-                return '<i class="fas fa-check sent"></i>';
-            }
-            return '<i class="fas fa-clock sending"></i>';
+        // Delete Message
+        function deleteMessage(messageId) {
+            if (!confirm('هل تريد حذف هذه الرسالة؟')) return;
+
+            const chatId = [currentUser.code, currentChatUser.code].sort().join('_');
+            database.ref('chats/' + chatId + '/messages/' + messageId).update({
+                deleted: true,
+                text: ''
+            });
+
+            document.querySelectorAll('.message-options').forEach(el => el.remove());
         }
 
-        function scrollToBottom() {
-            const messagesArea = document.getElementById('messagesArea');
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+        // Send Message
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+
+            if (!text || !currentChatUser) return;
+
+            const chatId = [currentUser.code, currentChatUser.code].sort().join('_');
+            const messageId = 'msg_' + Date.now();
+
+            const message = {
+                id: messageId,
+                senderId: currentUser.code,
+                receiverId: currentChatUser.code,
+                type: 'text',
+                text: text,
+                timestamp: Date.now(),
+                deleted: false
+            };
+
+            database.ref('chats/' + chatId + '/messages/' + messageId).set(message);
+            input.value = '';
+            toggleSendButton();
         }
 
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diff = now - date;
-            
-            if (diff < 60000) return 'الآن';
-            if (diff < 3600000) return Math.floor(diff / 60000) + ' د';
-            if (date.toDateString() === now.toDateString()) {
-                return date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' });
-            }
-            return date.toLocaleDateString('ar-IQ', { month: 'short', day: 'numeric' });
-        }
+        // Toggle Send Button
+        const messageInput = document.getElementById('message-input');
+        messageInput.addEventListener('input', toggleSendButton);
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        function toggleSendButton() {
+            const input = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            const micBtn = document.getElementById('mic-btn');
 
-        // ==================== Send Message ====================
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const micBtn = document.getElementById('micBtn');
-
-        messageInput.addEventListener('input', () => {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = messageInput.scrollHeight + 'px';
-            
-            if (messageInput.value.trim()) {
-                sendBtn.style.display = 'flex';
-                micBtn.style.display = 'none';
+            if (input.value.trim()) {
+                sendBtn.classList.remove('hidden');
+                micBtn.classList.add('hidden');
             } else {
-                sendBtn.style.display = 'none';
-                micBtn.style.display = 'block';
+                sendBtn.classList.add('hidden');
+                micBtn.classList.remove('hidden');
             }
-        });
+        }
 
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+        // Handle Enter Key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
                 sendMessage();
             }
         });
 
-        function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text || !currentChatId) return;
-
-            const message = {
-                text,
-                sender: currentUser.id,
-                timestamp: Date.now(),
-                sent: true,
-                delivered: false,
-                read: false
-            };
-
-            database.ref('chats/' + currentChatId + '/messages').push(message)
-                .then(() => {
-                    messageInput.value = '';
-                    messageInput.style.height = 'auto';
-                    sendBtn.style.display = 'none';
-                    micBtn.style.display = 'block';
-                    scrollToBottom();
-                });
-        }
-
-        // ==================== Image Handling ====================
-        function handleImageSelect(event) {
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-
-            selectedImages = [];
-            
-            files.forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    const url = URL.createObjectURL(file);
-                    selectedImages.push({ file, url });
-                }
-            });
-
+        // File Input Handler
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            selectedImages = Array.from(e.target.files);
             if (selectedImages.length > 0) {
                 showImagePreview();
             }
+        });
 
-            event.target.value = '';
-        }
-
+        // Show Image Preview
         function showImagePreview() {
-            const modal = document.getElementById('imagePreviewModal');
-            const grid = document.getElementById('previewImagesGrid');
+            const modal = document.createElement('div');
+            modal.className = 'image-preview-modal';
             
-            grid.innerHTML = selectedImages.map((img, i) => `
-                <div class="preview-image-item">
-                    <img src="${img.url}" alt="صورة ${i + 1}">
-                    <div class="preview-image-remove" onclick="removePreviewImage(${i})">
-                        <i class="fas fa-times"></i>
+            let imagesHTML = '';
+            selectedImages.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                imagesHTML += `
+                    <div class="preview-image-item">
+                        <img src="${url}" class="preview-image">
+                        <button class="remove-preview-image" onclick="removePreviewImage(${index})">×</button>
                     </div>
-                </div>
-            `).join('');
+                `;
+            });
 
-            modal.classList.remove('hidden');
+            modal.innerHTML = `
+                <div class="preview-header">
+                    <div class="preview-title">معاينة الصور (${selectedImages.length})</div>
+                    <button class="preview-close" onclick="closeImagePreview()">×</button>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-images">${imagesHTML}</div>
+                </div>
+                <div class="preview-footer">
+                    <input type="text" class="preview-input" id="preview-caption" placeholder="أضف تعليق (اختياري)">
+                    <button class="preview-send-btn" onclick="sendImages()">
+                        <i class="fas fa-paper-plane"></i> إرسال
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
         }
 
         function removePreviewImage(index) {
-            URL.revokeObjectURL(selectedImages[index].url);
             selectedImages.splice(index, 1);
-            
             if (selectedImages.length === 0) {
                 closeImagePreview();
             } else {
+                document.querySelector('.image-preview-modal').remove();
                 showImagePreview();
             }
         }
 
         function closeImagePreview() {
-            selectedImages.forEach(img => URL.revokeObjectURL(img.url));
+            document.querySelector('.image-preview-modal')?.remove();
             selectedImages = [];
-            document.getElementById('imagePreviewModal').classList.add('hidden');
-            document.getElementById('imageCaption').value = '';
+            document.getElementById('file-input').value = '';
         }
 
-        async function sendImages() {
-            if (selectedImages.length === 0 || !currentChatId) return;
+        function sendImages() {
+            const caption = document.getElementById('preview-caption').value.trim();
+            const chatId = [currentUser.code, currentChatUser.code].sort().join('_');
 
-            const caption = document.getElementById('imageCaption').value.trim();
-            closeImagePreview();
-
-            for (const img of selectedImages) {
-                try {
-                    const timestamp = Date.now();
-                    const storageRef = storage.ref('chat-images/' + timestamp + '_' + img.file.name);
-                    const uploadTask = await storageRef.put(img.file);
-                    const url = await uploadTask.ref.getDownloadURL();
-
+            selectedImages.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                     const message = {
-                        image: url,
-                        sender: currentUser.id,
-                        timestamp: timestamp,
-                        sent: true,
-                        delivered: false,
-                        read: false
+                        id: messageId,
+                        senderId: currentUser.code,
+                        receiverId: currentChatUser.code,
+                        type: 'image',
+                        imageUrl: e.target.result,
+                        text: caption,
+                        timestamp: Date.now(),
+                        deleted: false
                     };
 
-                    if (caption && selectedImages[0] === img) {
-                        message.text = caption;
-                    }
+                    database.ref('chats/' + chatId + '/messages/' + messageId).set(message);
+                };
+                reader.readAsDataURL(file);
+            });
 
-                    await database.ref('chats/' + currentChatId + '/messages').push(message);
-                } catch (error) {
-                    console.error('خطأ في رفع الصورة:', error);
-                }
-            }
+            closeImagePreview();
         }
 
-        function viewFullImage(url) {
-            window.open(url, '_blank');
+        // Voice Recording
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+
+                    mediaRecorder.addEventListener('stop', () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            sendAudioMessage(e.target.result);
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    });
+
+                    mediaRecorder.start();
+                    showRecordingUI();
+                })
+                .catch(err => {
+                    alert('لا يمكن الوصول إلى الميكروفون: ' + err.message);
+                });
         }
 
-        // ==================== Voice Recording ====================
-        async function startRecording() {
-            if (isRecording) {
-                stopRecording();
-                return;
-            }
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    uploadVoiceMessage(audioBlob);
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                recordingStartTime = Date.now();
-
-                // Update UI
-                const inputWrapper = document.getElementById('inputWrapper');
-                inputWrapper.innerHTML = `
-                    <div class="recording-indicator">
-                        <div class="recording-dot"></div>
-                        <span class="recording-time" id="recordingTime">0:00</span>
-                        <span class="recording-cancel" onclick="cancelRecording()">إلغاء</span>
-                    </div>
-                `;
-
-                // Show send button
-                sendBtn.style.display = 'flex';
-                sendBtn.innerHTML = '<i class="fas fa-stop"></i>';
-                sendBtn.onclick = stopRecording;
-
-                // Update timer
-                recordingInterval = setInterval(updateRecordingTime, 100);
-
-            } catch (error) {
-                console.error('خطأ في تسجيل الصوت:', error);
-                alert('الرجاء السماح بالوصول إلى الميكروفون');
-            }
+        function showRecordingUI() {
+            const inputBox = document.getElementById('input-box');
+            inputBox.innerHTML = `
+                <div class="recording-indicator">
+                    <div class="recording-dot"></div>
+                    <span>جاري التسجيل...</span>
+                </div>
+                <button class="input-btn" onclick="stopRecording()" style="color: #ef4444;">
+                    <i class="fas fa-stop"></i>
+                </button>
+            `;
+            document.getElementById('send-btn').classList.remove('hidden');
         }
 
         function stopRecording() {
-            if (!isRecording) return;
-            
-            isRecording = false;
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                resetInputUI();
             }
-            clearInterval(recordingInterval);
-            resetRecordingUI();
         }
 
-        function cancelRecording() {
-            if (!isRecording) return;
+        function resetInputUI() {
+            const inputBox = document.getElementById('input-box');
+            inputBox.innerHTML = `
+                <input type="text" id="message-input" placeholder="اكتب رسالة">
+                <button class="input-btn" onclick="startRecording()" id="mic-btn">
+                    <i class="fas fa-microphone"></i>
+                </button>
+            `;
+            document.getElementById('message-input').addEventListener('input', toggleSendButton);
+            document.getElementById('message-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            document.getElementById('send-btn').classList.add('hidden');
+        }
+
+        function sendAudioMessage(audioData) {
+            const chatId = [currentUser.code, currentChatUser.code].sort().join('_');
+            const messageId = 'msg_' + Date.now();
+
+            const message = {
+                id: messageId,
+                senderId: currentUser.code,
+                receiverId: currentChatUser.code,
+                type: 'audio',
+                audioUrl: audioData,
+                timestamp: Date.now(),
+                deleted: false
+            };
+
+            database.ref('chats/' + chatId + '/messages/' + messageId).set(message);
+        }
+
+        // Profile Functions
+        function showMyProfile() {
+            showUserProfile(currentUser);
+        }
+
+        function showUserProfile(user) {
+            const modal = document.createElement('div');
+            modal.className = 'profile-modal';
             
-            isRecording = false;
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-            clearInterval(recordingInterval);
-            audioChunks = [];
-            resetRecordingUI();
-        }
-
-        function resetRecordingUI() {
-            const inputWrapper = document.getElementById('inputWrapper');
-            inputWrapper.innerHTML = `
-                <textarea class="message-input" id="messageInput" placeholder="اكتب رسالة" rows="1"></textarea>
-                <i class="input-icon fas fa-microphone" id="micBtn" style="font-size: 20px;" onclick="startRecording()"></i>
+            const avatarHTML = user.avatar ? 
+                `<img src="${user.avatar}" class="profile-avatar-large">` :
+                `<div class="profile-default-avatar">${user.name.charAt(0)}</div>`;
+            
+            modal.innerHTML = `
+                <div class="profile-content">
+                    <div class="profile-header">
+                        <button class="profile-close" onclick="this.closest('.profile-modal').remove()">×</button>
+                        ${avatarHTML}
+                        <div class="profile-name">${user.name}</div>
+                        <div class="profile-code">الكود: ${user.code}</div>
+                    </div>
+                    <div class="profile-body">
+                        <div class="profile-section">
+                            <div class="profile-section-title">معلومات الحساب</div>
+                            <div class="profile-info">
+                                <p><strong>الاسم:</strong> ${user.name}</p>
+                                <p><strong>الكود:</strong> ${user.code}</p>
+                                <p><strong>تاريخ الإنشاء:</strong> ${formatDate(user.createdAt)}</p>
+                            </div>
+                        </div>
+                        ${user.code === currentUser.code ? `
+                        <div class="profile-section">
+                            <div class="profile-section-title">رمز QR الخاص بك</div>
+                            <div class="profile-qr">
+                                <canvas id="profile-qr-code"></canvas>
+                                <p style="margin-top: 15px; color: #667781; font-size: 13px;">
+                                    شارك هذا الرمز مع أصدقائك لإضافتك
+                                </p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
             `;
 
-            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-            sendBtn.onclick = sendMessage;
-            sendBtn.style.display = 'none';
+            document.body.appendChild(modal);
 
-            // Re-attach event listeners
-            const newInput = document.getElementById('messageInput');
-            newInput.addEventListener('input', () => {
-                newInput.style.height = 'auto';
-                newInput.style.height = newInput.scrollHeight + 'px';
-                
-                if (newInput.value.trim()) {
-                    sendBtn.style.display = 'flex';
-                    document.getElementById('micBtn').style.display = 'none';
-                } else {
-                    sendBtn.style.display = 'none';
-                    document.getElementById('micBtn').style.display = 'block';
-                }
-            });
-
-            newInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-        }
-
-        function updateRecordingTime() {
-            if (!isRecording) return;
-            
-            const elapsed = Date.now() - recordingStartTime;
-            const minutes = Math.floor(elapsed / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            
-            const timeEl = document.getElementById('recordingTime');
-            if (timeEl) {
-                timeEl.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
-            }
-        }
-
-        async function uploadVoiceMessage(audioBlob) {
-            if (!currentChatId) return;
-
-            try {
-                const timestamp = Date.now();
-                const storageRef = storage.ref('voice/' + timestamp + '.mp3');
-                const uploadTask = await storageRef.put(audioBlob);
-                const url = await uploadTask.ref.getDownloadURL();
-
-                const message = {
-                    audio: url,
-                    sender: currentUser.id,
-                    timestamp: timestamp,
-                    sent: true,
-                    delivered: false,
-                    read: false
-                };
-
-                await database.ref('chats/' + currentChatId + '/messages').push(message);
-            } catch (error) {
-                console.error('خطأ في رفع الرسالة الصوتية:', error);
-            }
-        }
-
-        // ==================== Message Menu ====================
-        function showMessageMenu(event, messageId, isSent) {
-            event.preventDefault();
-            
-            // Remove any existing menu
-            const existingMenu = document.querySelector('.message-menu');
-            if (existingMenu) existingMenu.remove();
-
-            const menu = document.createElement('div');
-            menu.className = 'message-menu';
-            menu.style.position = 'fixed';
-            menu.style.left = event.clientX + 'px';
-            menu.style.top = event.clientY + 'px';
-
-            const deleteForMe = `<div class="message-menu-item" onclick="deleteMessage('${messageId}', 'me')">
-                <i class="fas fa-trash"></i> حذف لدي
-            </div>`;
-
-            const deleteForAll = isSent ? `<div class="message-menu-item danger" onclick="deleteMessage('${messageId}', 'all')">
-                <i class="fas fa-trash-alt"></i> حذف للجميع
-            </div>` : '';
-
-            menu.innerHTML = deleteForMe + deleteForAll;
-
-            document.body.appendChild(menu);
-
-            // Close menu on click outside
-            setTimeout(() => {
-                document.addEventListener('click', function closeMenu() {
-                    menu.remove();
-                    document.removeEventListener('click', closeMenu);
-                });
-            }, 100);
-        }
-
-        function deleteMessage(messageId, type) {
-            if (type === 'all') {
-                database.ref('chats/' + currentChatId + '/messages/' + messageId).update({
-                    deleted: 'all',
-                    text: null,
-                    image: null,
-                    audio: null
-                });
-            } else {
-                database.ref('chats/' + currentChatId + '/messages/' + messageId).update({
-                    deleted: 'me'
-                });
-            }
-        }
-
-        // ==================== Friend Requests ====================
-        function showAddFriend() {
-            document.getElementById('addFriendModal').classList.remove('hidden');
-            document.getElementById('friendSearchInput').value = '';
-            document.getElementById('friendSearchResults').innerHTML = '';
-        }
-
-        function closeAddFriend() {
-            document.getElementById('addFriendModal').classList.add('hidden');
-        }
-
-        document.getElementById('friendSearchInput').addEventListener('input', (e) => {
-            const code = e.target.value.trim().toUpperCase();
-            if (code.length >= 4) {
-                searchFriendByCode(code);
-            } else {
-                document.getElementById('friendSearchResults').innerHTML = '';
-            }
-        });
-
-        function searchFriendByCode(code) {
-            database.ref('users').orderByChild('code').equalTo(code).once('value')
-                .then(snapshot => {
-                    const results = document.getElementById('friendSearchResults');
-                    
-                    if (!snapshot.exists()) {
-                        results.innerHTML = '<div style="color: #667781; text-align: center; padding: 20px;">لم يتم العثور على مستخدم</div>';
-                        return;
-                    }
-
-                    const userData = Object.values(snapshot.val())[0];
-                    const userId = Object.keys(snapshot.val())[0];
-
-                    if (userId === currentUser.id) {
-                        results.innerHTML = '<div style="color: #667781; text-align: center; padding: 20px;">لا يمكنك إضافة نفسك</div>';
-                        return;
-                    }
-
-                    // Check if already friends
-                    database.ref('users/' + currentUser.id + '/friends/' + userId).once('value', friendSnap => {
-                        if (friendSnap.exists()) {
-                            results.innerHTML = '<div style="color: #667781; text-align: center; padding: 20px;">أنتما أصدقاء بالفعل</div>';
-                            return;
-                        }
-
-                        // Check if request already sent
-                        database.ref('friendRequests/' + userId + '/' + currentUser.id).once('value', reqSnap => {
-                            const alreadySent = reqSnap.exists();
-                            
-                            results.innerHTML = `
-                                <div class="friend-result">
-                                    <img src="${userData.avatar}" class="request-avatar">
-                                    <div class="request-info">
-                                        <div class="request-name">${userData.name}</div>
-                                        <div class="request-code">${userData.code}</div>
-                                    </div>
-                                    ${alreadySent ? 
-                                        '<span style="color: #667781;">تم إرسال الطلب</span>' :
-                                        `<button class="add-friend-btn" onclick="sendFriendRequest('${userId}')">إضافة</button>`
-                                    }
-                                </div>
-                            `;
-                        });
-                    });
-                });
-        }
-
-        function sendFriendRequest(toUserId) {
-            database.ref('friendRequests/' + toUserId + '/' + currentUser.id).set({
-                from: currentUser.id,
-                fromName: currentUser.name,
-                fromAvatar: currentUser.avatar,
-                fromCode: currentUser.code,
-                timestamp: Date.now()
-            }).then(() => {
-                alert('تم إرسال طلب الصداقة');
-                closeAddFriend();
-            });
-        }
-
-        function loadFriendRequests() {
-            database.ref('friendRequests/' + currentUser.id).on('value', snapshot => {
-                // This will be used to show notifications
-                const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-                // You can add a badge here if needed
-            });
-        }
-
-        function acceptFriendRequest(fromUserId) {
-            // Add to both users' friends lists
-            const updates = {};
-            updates['users/' + currentUser.id + '/friends/' + fromUserId] = true;
-            updates['users/' + fromUserId + '/friends/' + currentUser.id] = true;
-            updates['friendRequests/' + currentUser.id + '/' + fromUserId] = null;
-
-            database.ref().update(updates).then(() => {
-                alert('تم قبول الطلب');
-            });
-        }
-
-        function rejectFriendRequest(fromUserId) {
-            database.ref('friendRequests/' + currentUser.id + '/' + fromUserId).remove()
-                .then(() => {
-                    alert('تم رفض الطلب');
-                });
-        }
-
-        // ==================== Profile ====================
-        function showMyProfile() {
-            showProfile(currentUser.id, true);
-        }
-
-        function showContactProfile() {
-            if (currentChatUser) {
-                showProfile(currentChatUser.id, false);
-            }
-        }
-
-        function showProfile(userId, isMe) {
-            database.ref('users/' + userId).once('value', snapshot => {
-                if (!snapshot.exists()) return;
-
-                const user = snapshot.val();
-                const modal = document.getElementById('profileModal');
-
-                document.getElementById('profileAvatar').src = user.avatar;
-                document.getElementById('profileName').textContent = user.name;
-                document.getElementById('profileCode').textContent = 'الكود: ' + user.code;
-
-                const actionsDiv = document.getElementById('profileActions');
-                
-                if (isMe) {
-                    actionsDiv.innerHTML = `
-                        <button class="profile-btn profile-btn-primary" onclick="showMyQR()">
-                            <i class="fas fa-qrcode"></i> عرض QR Code
-                        </button>
-                        <button class="profile-btn profile-btn-danger" onclick="logout()">
-                            تسجيل الخروج
-                        </button>
-                    `;
-                } else {
-                    actionsDiv.innerHTML = `
-                        <button class="profile-btn profile-btn-danger" onclick="unfriend('${userId}')">
-                            إزالة من الأصدقاء
-                        </button>
-                    `;
-                }
-
-                modal.classList.remove('hidden');
-            });
-        }
-
-        function closeProfile() {
-            document.getElementById('profileModal').classList.add('hidden');
-        }
-
-        function showMyQR() {
-            // Check if QRCode library is loaded
-            if (typeof QRCode === 'undefined') {
-                console.error('❌ QRCode library not loaded');
-                alert('مكتبة QR Code لم يتم تحميلها. الرجاء تحديث الصفحة.');
-                return;
-            }
-            
-            closeProfile();
-            // Generate and show QR code for current user
-            const qrDiv = document.getElementById('qrcode');
-            qrDiv.innerHTML = '';
-            
-            try {
-                new QRCode(qrDiv, {
-                    text: currentUser.code,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                
-                // Show in a modal or alert
-                alert('سيتم عرض QR Code الخاص بك');
-            } catch (error) {
-                console.error('❌ Error generating QR code:', error);
-                alert('خطأ في إنشاء QR Code');
-            }
-        }
-
-        function unfriend(userId) {
-            if (confirm('هل تريد إزالة هذا الشخص من الأصدقاء؟')) {
-                const updates = {};
-                updates['users/' + currentUser.id + '/friends/' + userId] = null;
-                updates['users/' + userId + '/friends/' + currentUser.id] = null;
-
-                database.ref().update(updates).then(() => {
-                    closeProfile();
-                    backToChats();
-                    alert('تم إزالة الصديق');
-                });
-            }
-        }
-
-        function logout() {
-            if (confirm('هل تريد تسجيل الخروج؟')) {
-                localStorage.removeItem('currentUser');
-                currentUser = null;
-                currentChatUser = null;
-                currentChatId = null;
-                
-                document.getElementById('main-screen').classList.add('hidden');
-                document.getElementById('gmail-screen').classList.remove('hidden');
-                generateFakeEmails();
-            }
-        }
-
-        // ==================== Admin Functions ====================
-        function switchAdminTab(tab) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-
-            document.getElementById('adminCreateTab').classList.add('hidden');
-            document.getElementById('adminUsersTab').classList.add('hidden');
-            document.getElementById('adminRequestsTab').classList.add('hidden');
-
-            if (tab === 'create') {
-                document.getElementById('adminCreateTab').classList.remove('hidden');
-            } else if (tab === 'users') {
-                document.getElementById('adminUsersTab').classList.remove('hidden');
-                loadAllUsers();
-            } else if (tab === 'requests') {
-                document.getElementById('adminRequestsTab').classList.remove('hidden');
-                loadAllFriendRequests();
-            }
-        }
-
-        function generateUserCode() {
-            const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-            document.getElementById('newUserCode').value = code;
-        }
-
-        function previewUserAvatar(event) {
-            const file = event.target.files[0];
-            if (file) {
-                selectedAvatarFile = file;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const preview = document.getElementById('avatarPreview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function createUser(event) {
-            event.preventDefault();
-
-            const name = document.getElementById('newUserName').value.trim();
-            const code = document.getElementById('newUserCode').value.trim();
-
-            if (!name || !code) {
-                alert('الرجاء ملء جميع الحقول');
-                return;
-            }
-
-            if (!selectedAvatarFile) {
-                alert('الرجاء اختيار صورة');
-                return;
-            }
-
-            try {
-                // Upload avatar
-                const timestamp = Date.now();
-                const storageRef = storage.ref('avatars/' + timestamp + '_' + selectedAvatarFile.name);
-                const uploadTask = await storageRef.put(selectedAvatarFile);
-                const avatarUrl = await uploadTask.ref.getDownloadURL();
-
-                // Create user
-                const userData = {
-                    name,
-                    code,
-                    avatar: avatarUrl,
-                    createdAt: timestamp,
-                    blocked: false
-                };
-
-                await database.ref('users').push(userData);
-
-                // Generate QR Code
-                const qrDiv = document.getElementById('qrcode');
-                qrDiv.innerHTML = '';
-                new QRCode(qrDiv, {
-                    text: code,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-
-                document.getElementById('qrCodeDisplay').style.display = 'block';
-
-                // Reset form
-                document.getElementById('newUserName').value = '';
-                selectedAvatarFile = null;
-                document.getElementById('avatarPreview').style.display = 'none';
-                generateUserCode();
-
-                alert('تم إنشاء المستخدم بنجاح');
-            } catch (error) {
-                console.error('خطأ في إنشاء المستخدم:', error);
-                alert('حدث خطأ: ' + error.message);
-            }
-        }
-
-        function loadAllUsers() {
-            database.ref('users').once('value', snapshot => {
-                const grid = document.getElementById('usersGrid');
-                
-                if (!snapshot.exists()) {
-                    grid.innerHTML = '<div style="color: #667781; text-align: center; padding: 40px;">لا يوجد مستخدمين</div>';
-                    return;
-                }
-
-                const users = [];
-                snapshot.forEach(child => {
-                    if (!child.val().isAdmin) {
-                        users.push({ id: child.key, ...child.val() });
-                    }
-                });
-
-                grid.innerHTML = users.map(user => `
-                    <div class="user-card">
-                        <img src="${user.avatar}" class="user-card-avatar">
-                        <div class="user-card-name">${user.name}</div>
-                        <div class="user-card-code">${user.code}</div>
-                        <div class="user-card-actions">
-                            <button class="user-card-btn btn-qr" onclick="showUserQR('${user.code}')">
-                                <i class="fas fa-qrcode"></i>
-                            </button>
-                            <button class="user-card-btn ${user.blocked ? 'btn-qr' : 'btn-block'}" onclick="toggleBlock('${user.id}', ${user.blocked})">
-                                <i class="fas fa-${user.blocked ? 'unlock' : 'ban'}"></i>
-                            </button>
-                            <button class="user-card-btn btn-delete" onclick="deleteUser('${user.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            });
-        }
-
-        function showUserQR(code) {
-            const qrDiv = document.getElementById('qrcode');
-            qrDiv.innerHTML = '';
-            new QRCode(qrDiv, {
-                text: code,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            document.getElementById('qrCodeDisplay').style.display = 'block';
-            switchAdminTab('create');
-        }
-
-        function toggleBlock(userId, isBlocked) {
-            database.ref('users/' + userId).update({
-                blocked: !isBlocked
-            }).then(() => {
-                loadAllUsers();
-            });
-        }
-
-        function deleteUser(userId) {
-            if (confirm('هل تريد حذف هذا المستخدم؟')) {
-                database.ref('users/' + userId).remove().then(() => {
-                    loadAllUsers();
-                });
-            }
-        }
-
-        function loadAllFriendRequests() {
-            database.ref('friendRequests').once('value', snapshot => {
-                const list = document.getElementById('requestsList');
-                
-                if (!snapshot.exists()) {
-                    list.innerHTML = '<div style="color: #667781; text-align: center; padding: 40px;">لا توجد طلبات</div>';
-                    return;
-                }
-
-                const requests = [];
-                snapshot.forEach(userReqs => {
-                    userReqs.forEach(req => {
-                        requests.push({
-                            to: userReqs.key,
-                            from: req.key,
-                            ...req.val()
-                        });
-                    });
-                });
-
-                list.innerHTML = requests.map(req => `
-                    <div class="request-item">
-                        <img src="${req.fromAvatar}" class="request-avatar">
-                        <div class="request-info">
-                            <div class="request-name">${req.fromName} → مستخدم ${req.to.substring(0, 8)}</div>
-                            <div class="request-code">من: ${req.fromCode}</div>
-                        </div>
-                        <div style="color: #667781; font-size: 13px;">${formatTime(req.timestamp)}</div>
-                    </div>
-                `).join('');
-            });
-        }
-
-        function logoutAdmin() {
-            document.getElementById('admin-screen').classList.add('hidden');
-            document.getElementById('gmail-screen').classList.remove('hidden');
-            generateFakeEmails();
-        }
-
-        function showMenu() {
-            // Add menu options here
-        }
-
-        // ==================== Initialize ====================
-        
-        // Function to hide loading screen
-        function hideLoadingScreen() {
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('hidden');
+            // Generate QR Code
+            if (user.code === currentUser.code) {
                 setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                }, 300);
+                    const canvas = document.getElementById('profile-qr-code');
+                    if (canvas) {
+                        QRCode.toCanvas(canvas, user.code, {
+                            width: 200,
+                            margin: 2,
+                            color: {
+                                dark: '#000000',
+                                light: '#ffffff'
+                            }
+                        });
+                    }
+                }, 100);
             }
         }
 
-        // Function to check all libraries
-        function checkLibraries() {
-            console.log('🔍 Checking libraries...');
-            
-            const checks = {
-                firebase: typeof firebase !== 'undefined',
-                firebaseDatabase: typeof firebase !== 'undefined' && firebase.database,
-                firebaseStorage: typeof firebase !== 'undefined' && firebase.storage,
-                QRCode: typeof QRCode !== 'undefined',
-                Html5Qrcode: typeof Html5Qrcode !== 'undefined'
-            };
-            
-            console.log('📚 Library Status:', checks);
-            
-            // Check critical libraries
-            if (!checks.firebase || !checks.firebaseDatabase || !checks.firebaseStorage) {
-                console.error('❌ Critical Firebase libraries missing');
-                alert('خطأ في تحميل المكتبات الأساسية. الرجاء تحديث الصفحة.\n\nإذا استمرت المشكلة، تأكد من اتصالك بالإنترنت.');
-                return false;
-            }
-            
-            // Warn about optional libraries
-            if (!checks.QRCode) {
-                console.warn('⚠️ QRCode library not loaded - QR features will be disabled');
-            }
-            if (!checks.Html5Qrcode) {
-                console.warn('⚠️ Html5Qrcode library not loaded - Scanner features will be disabled');
-            }
-            
-            console.log('✅ All critical libraries loaded successfully');
-            return true;
+        // Friend Requests
+        function loadFriendRequests() {
+            if (!currentUser) return;
+
+            database.ref('users/' + currentUser.code + '/friendRequests').on('value', (snapshot) => {
+                const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+                // Update badge if needed
+            });
         }
 
-        // Function to initialize the app
-        function initializeApp() {
-            console.log('🚀 Initializing application...');
+        function showFriendRequests() {
+            const modal = document.createElement('div');
+            modal.className = 'friend-requests-modal';
             
-            // Check libraries
-            if (!checkLibraries()) {
-                hideLoadingScreen();
+            modal.innerHTML = `
+                <div class="friend-requests-content">
+                    <div class="friend-requests-header">
+                        <div class="friend-requests-title">طلبات الصداقة</div>
+                        <button class="friend-requests-close" onclick="this.closest('.friend-requests-modal').remove()">×</button>
+                    </div>
+                    <div class="friend-requests-list" id="friend-requests-list">
+                        <div class="empty-state">
+                            <i class="fas fa-user-plus"></i>
+                            <h3>لا توجد طلبات</h3>
+                            <p>لا يوجد طلبات صداقة في الوقت الحالي</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            database.ref('users/' + currentUser.code + '/friendRequests').once('value', (snapshot) => {
+                const requestsList = document.getElementById('friend-requests-list');
+                
+                if (snapshot.exists()) {
+                    requestsList.innerHTML = '';
+                    const requests = snapshot.val();
+                    
+                    Object.keys(requests).forEach(requesterCode => {
+                        database.ref('users/' + requesterCode).once('value', (userSnapshot) => {
+                            if (userSnapshot.exists()) {
+                                const requester = userSnapshot.val();
+                                const requestDiv = document.createElement('div');
+                                requestDiv.className = 'friend-request-item';
+                                
+                                const avatarHTML = requester.avatar ? 
+                                    `<img src="${requester.avatar}" class="chat-avatar">` :
+                                    `<div class="default-avatar">${requester.name.charAt(0)}</div>`;
+                                
+                                requestDiv.innerHTML = `
+                                    ${avatarHTML}
+                                    <div class="friend-request-info">
+                                        <div class="friend-request-name">${requester.name}</div>
+                                        <div class="friend-request-code">الكود: ${requesterCode}</div>
+                                    </div>
+                                    <div class="friend-request-actions">
+                                        <button class="accept-btn" onclick="acceptFriendRequest('${requesterCode}')">قبول</button>
+                                        <button class="reject-btn" onclick="rejectFriendRequest('${requesterCode}')">رفض</button>
+                                    </div>
+                                `;
+                                
+                                requestsList.appendChild(requestDiv);
+                            }
+                        });
+                    });
+                }
+            });
+        }
+
+        function acceptFriendRequest(requesterCode) {
+            // Add to friends
+            database.ref('users/' + currentUser.code + '/friends/' + requesterCode).set(true);
+            database.ref('users/' + requesterCode + '/friends/' + currentUser.code).set(true);
+
+            // Remove from requests
+            database.ref('users/' + currentUser.code + '/friendRequests/' + requesterCode).remove();
+
+            document.querySelector('.friend-requests-modal').remove();
+            loadChats();
+            alert('تم قبول طلب الصداقة! 🎉');
+        }
+
+        function rejectFriendRequest(requesterCode) {
+            database.ref('users/' + currentUser.code + '/friendRequests/' + requesterCode).remove();
+            document.querySelector('.friend-requests-modal').remove();
+        }
+
+        // Search User Modal
+        function showSearchUserModal() {
+            const modal = document.createElement('div');
+            modal.className = 'search-user-modal';
+            
+            modal.innerHTML = `
+                <div class="search-user-content">
+                    <div class="search-user-header">
+                        <div class="search-user-title">إضافة صديق</div>
+                        <button class="friend-requests-close" onclick="this.closest('.search-user-modal').remove()">×</button>
+                    </div>
+                    <div class="search-user-tabs">
+                        <button class="search-tab active" onclick="switchSearchTab('code')">
+                            <i class="fas fa-keyboard"></i> البحث بالكود
+                        </button>
+                        <button class="search-tab" onclick="switchSearchTab('qr')">
+                            <i class="fas fa-qrcode"></i> مسح QR
+                        </button>
+                    </div>
+                    <div id="search-by-code">
+                        <div class="search-user-input-group">
+                            <input type="text" class="search-user-input" id="search-code-input" placeholder="أدخل كود المستخدم">
+                        </div>
+                        <button class="add-friend-btn" onclick="searchUserByCode()">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                    </div>
+                    <div id="search-by-qr" class="hidden">
+                        <div class="qr-scanner-container">
+                            <div id="qr-reader"></div>
+                            <button class="add-friend-btn" onclick="startQRScanner()">
+                                <i class="fas fa-camera"></i> تشغيل الكاميرا
+                            </button>
+                        </div>
+                    </div>
+                    <div id="search-result" class="hidden"></div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function switchSearchTab(tab) {
+            document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+            event.target.closest('.search-tab').classList.add('active');
+
+            if (tab === 'code') {
+                document.getElementById('search-by-code').classList.remove('hidden');
+                document.getElementById('search-by-qr').classList.add('hidden');
+            } else {
+                document.getElementById('search-by-code').classList.add('hidden');
+                document.getElementById('search-by-qr').classList.remove('hidden');
+            }
+        }
+
+        function searchUserByCode() {
+            const code = document.getElementById('search-code-input').value.trim().toUpperCase();
+            
+            if (!code) {
+                alert('الرجاء إدخال الكود');
                 return;
             }
-            
-            try {
-                // Check if user is logged in
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    currentUser = JSON.parse(savedUser);
-                    showMainScreen();
-                } else {
-                    document.getElementById('gmail-screen').classList.remove('hidden');
-                    generateFakeEmails();
-                    setupGmailSearch();
-                }
 
-                // Register service worker
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./service-worker.js')
-                        .then(() => console.log('✅ Service Worker registered'))
-                        .catch(err => console.log('⚠️ SW registration failed:', err));
-                }
-                
-                console.log('✅ Application initialized successfully');
-            } catch (error) {
-                console.error('❌ Error during initialization:', error);
-                alert('خطأ في تهيئة التطبيق. الرجاء تحديث الصفحة.');
-            } finally {
-                hideLoadingScreen();
+            if (code === currentUser.code) {
+                alert('لا يمكنك إضافة نفسك!');
+                return;
             }
+
+            database.ref('users/' + code).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const user = snapshot.val();
+                    displaySearchResult(user, code);
+                } else {
+                    alert('المستخدم غير موجود');
+                }
+            });
         }
 
-        // Wait for window load, then add a small delay for CDN libraries
-        window.addEventListener('load', function() {
-            console.log('📄 Page loaded, waiting for libraries...');
+        function displaySearchResult(user, code) {
+            const resultDiv = document.getElementById('search-result');
             
-            // Add 500ms delay to ensure CDN scripts are fully loaded and parsed
-            setTimeout(initializeApp, 500);
-        });
-        
-        // Fallback: If load event already fired
-        if (document.readyState === 'complete') {
-            console.log('📄 Page already loaded, initializing...');
-            setTimeout(initializeApp, 500);
+            const avatarHTML = user.avatar ? 
+                `<img src="${user.avatar}" class="search-result-avatar">` :
+                `<div class="search-result-default-avatar">${user.name.charAt(0)}</div>`;
+            
+            // Check if already friends
+            const isFriend = currentUser.friends && currentUser.friends[code];
+            const hasSentRequest = user.friendRequests && user.friendRequests[currentUser.code];
+
+            let buttonHTML = '';
+            if (isFriend) {
+                buttonHTML = '<button class="add-friend-btn" disabled>أنت أصدقاء بالفعل</button>';
+            } else if (hasSentRequest) {
+                buttonHTML = '<button class="add-friend-btn" disabled>تم إرسال الطلب</button>';
+            } else {
+                buttonHTML = `<button class="add-friend-btn" onclick="sendFriendRequest('${code}')">
+                    <i class="fas fa-user-plus"></i> إرسال طلب صداقة
+                </button>`;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="search-result">
+                    ${avatarHTML}
+                    <div class="search-result-name">${user.name}</div>
+                    <div class="search-result-code">الكود: ${code}</div>
+                    ${buttonHTML}
+                </div>
+            `;
+
+            resultDiv.classList.remove('hidden');
         }
+
+        function sendFriendRequest(recipientCode) {
+            database.ref('users/' + recipientCode + '/friendRequests/' + currentUser.code).set(true)
+                .then(() => {
+                    alert('تم إرسال طلب الصداقة! ✅');
+                    document.querySelector('.search-user-modal').remove();
+                })
+                .catch(error => {
+                    alert('حدث خطأ: ' + error.message);
+                });
+        }
+
+        function startQRScanner() {
+            const qrReader = document.getElementById('qr-reader');
+            
+            const html5QrCode = new Html5Qrcode("qr-reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    html5QrCode.stop();
+                    searchUserByCode();
+                    document.getElementById('search-code-input').value = decodedText;
+                    switchSearchTab('code');
+                    searchUserByCode();
+                }
+            ).catch(err => {
+                alert('خطأ في تشغيل الكاميرا: ' + err);
+            });
+        }
+
+        // Utility Functions
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('ar-EG');
+        }
+
+        function viewImage(url) {
+            const modal = document.createElement('div');
+            modal.className = 'image-preview-modal';
+            modal.innerHTML = `
+                <div class="preview-header">
+                    <button class="preview-close" onclick="this.closest('.image-preview-modal').remove()">×</button>
+                </div>
+                <div class="preview-content">
+                    <img src="${url}" style="max-width: 90%; max-height: 80vh; border-radius: 8px;">
+                </div>
+            `;
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+            document.body.appendChild(modal);
+        }
+
+        // Gmail Search Implementation
+        document.getElementById('gmail-search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const emails = document.querySelectorAll('.email-item');
+            
+            emails.forEach(email => {
+                const text = email.textContent.toLowerCase();
+                email.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
     </script>
 </body>
 </html>
