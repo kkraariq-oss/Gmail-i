@@ -1,7 +1,8 @@
-const CACHE_NAME = 'gmail-chat-v3';
+const CACHE_NAME = 'gmail-chat-final-v1';
 const urlsToCache = [
-  '/',
-  '/index.html'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
