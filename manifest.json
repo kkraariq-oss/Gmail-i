@@ -1,11 +1,11 @@
 {
   "name": "Gmail",
   "short_name": "Gmail",
-  "description": "تطبيق محادثات",
+  "description": "Gmail Chat Application",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#25D366",
-  "theme_color": "#075E54",
+  "background_color": "#ffffff",
+  "theme_color": "#c71610",
   "orientation": "portrait",
   "icons": [
     {

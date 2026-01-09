@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gmail-chat-final-v1';
+const CACHE_NAME = 'whatsapp-chat-v1';
 const urlsToCache = [
   './',
   './index.html',
