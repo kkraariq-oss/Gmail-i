@@ -1,0 +1,39 @@
+{
+  "name": "restaurant-management-system",
+  "version": "1.0.0",
+  "description": "نظام إدارة مطعم متكامل - Restaurant Management System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "restaurant",
+    "pos",
+    "management",
+    "arabic"
+  ],
+  "author": "Digital Creativity Company",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1",
+    "jspdf": "^2.5.1",
+    "xlsx": "^0.18.5",
+    "electron-pos-printer": "^1.3.5"
+  },
+  "build": {
+    "appId": "com.digitalcreativity.restaurant",
+    "productName": "نظام إدارة المطعم",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icons/icon.png"
+    }
+  }
+}
