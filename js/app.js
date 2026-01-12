@@ -122,15 +122,80 @@ function updateDashboardStats() {
 
 // معالجة النقر على بطاقات الأقسام
 document.addEventListener('DOMContentLoaded', () => {
+    // إخفاء شاشة التحميل بعد تحميل الصفحة
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) loadingScreen.style.display = 'none';
+
+    // إصلاح زر الإشعارات
+    const notificationBtn = document.querySelector('.notification-btn');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    if (notificationBtn && notificationsPanel) {
+        notificationBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notificationsPanel.classList.toggle('show');
+        });
+        // إغلاق عند النقر خارج اللوحة
+        document.addEventListener('click', (e) => {
+            if (!notificationsPanel.contains(e.target) && !notificationBtn.contains(e.target)) {
+                notificationsPanel.classList.remove('show');
+            }
+        });
+        // زر الإغلاق في اللوحة
+        const closeBtn = notificationsPanel.querySelector('button');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                notificationsPanel.classList.remove('show');
+            });
+        }
+    }
+
+    // إصلاح زر المدير العام (القائمة المنسدلة)
+    const userBtn = document.querySelector('.user-btn');
+    const userDropdown = document.getElementById('userDropdown');
+    if (userBtn && userDropdown) {
+        userBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+        // إغلاق عند النقر خارج القائمة
+        document.addEventListener('click', (e) => {
+            if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
+                userDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // إصلاح زر القائمة (الهامبرغر) للموبايل
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    if (menuToggle && mobileSidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileSidebar.classList.toggle('show');
+        });
+        // إغلاق عند النقر خارج القائمة الجانبية
+        document.addEventListener('click', (e) => {
+            if (!mobileSidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                mobileSidebar.classList.remove('show');
+            }
+        });
+        // زر الإغلاق داخل القائمة الجانبية
+        const closeSidebarBtn = mobileSidebar.querySelector('.close-sidebar');
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', () => {
+                mobileSidebar.classList.remove('show');
+            });
+        }
+    }
+
+    // معالجة النقر على بطاقات الأقسام
     const sectionCards = document.querySelectorAll('.section-card[data-section]');
-    
     sectionCards.forEach(card => {
         card.addEventListener('click', () => {
             const section = card.getAttribute('data-section');
             navigateToSection(section);
         });
     });
-    
     // تحديث الإحصائيات كل 30 ثانية
     setInterval(updateDashboardStats, 30000);
 });
@@ -158,7 +223,7 @@ function readFileAsText(file) {
 // دالة لإنشاء عنصر HTML
 function createElement(tag, attributes = {}, content = '') {
     const element = document.createElement(tag);
-    
+
     Object.keys(attributes).forEach(key => {
         if (key === 'class') {
             element.className = attributes[key];
@@ -168,15 +233,28 @@ function createElement(tag, attributes = {}, content = '') {
             element.setAttribute(key, attributes[key]);
         }
     });
-    
-    if (content) {
+
+    if (content !== undefined && content !== null) {
         if (typeof content === 'string') {
             element.innerHTML = content;
-        } else {
+        } else if (content instanceof Node) {
             element.appendChild(content);
+        } else if (Array.isArray(content)) {
+            content.forEach(child => {
+                if (typeof child === 'string') {
+                    element.appendChild(document.createTextNode(child));
+                } else if (child instanceof Node) {
+                    element.appendChild(child);
+                } else if (child !== undefined && child !== null) {
+                    element.appendChild(document.createTextNode(String(child)));
+                }
+            });
+        } else {
+            // For numbers, booleans, objects, etc.
+            element.textContent = String(content);
         }
     }
-    
+
     return element;
 }
 

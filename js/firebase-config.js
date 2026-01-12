@@ -1,16 +1,16 @@
 // إعدادات Firebase
 // قم بتغيير هذه الإعدادات بإعدادات مشروعك الخاص من Firebase Console
 
- const firebaseConfig = {
-            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
-            authDomain: "messageemeapp.firebaseapp.com",
-            databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
-            projectId: "messageemeapp",
-            storageBucket: "messageemeapp.appspot.com",
-            messagingSenderId: "255034474844",
-            appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
-        };
-
+const firebaseConfig = {
+  apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
+  authDomain: "messageemeapp.firebaseapp.com",
+  databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
+  projectId: "messageemeapp",
+  storageBucket: "messageemeapp.appspot.com",
+  messagingSenderId: "255034474844",
+  appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199",
+  measurementId: "G-4QBEWRC583"
+};
 
 // تهيئة Firebase
 let firebaseApp;
