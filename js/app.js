@@ -158,7 +158,7 @@ function readFileAsText(file) {
 // دالة لإنشاء عنصر HTML
 function createElement(tag, attributes = {}, content = '') {
     const element = document.createElement(tag);
-
+    
     Object.keys(attributes).forEach(key => {
         if (key === 'class') {
             element.className = attributes[key];
@@ -168,28 +168,15 @@ function createElement(tag, attributes = {}, content = '') {
             element.setAttribute(key, attributes[key]);
         }
     });
-
-    if (content !== undefined && content !== null) {
+    
+    if (content) {
         if (typeof content === 'string') {
             element.innerHTML = content;
-        } else if (content instanceof Node) {
-            element.appendChild(content);
-        } else if (Array.isArray(content)) {
-            content.forEach(child => {
-                if (typeof child === 'string') {
-                    element.appendChild(document.createTextNode(child));
-                } else if (child instanceof Node) {
-                    element.appendChild(child);
-                } else if (child !== undefined && child !== null) {
-                    element.appendChild(document.createTextNode(String(child)));
-                }
-            });
         } else {
-            // For numbers, booleans, objects, etc.
-            element.textContent = String(content);
+            element.appendChild(content);
         }
     }
-
+    
     return element;
 }
 
