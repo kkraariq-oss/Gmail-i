@@ -94,9 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.success) {
                 showNotification('تم تسجيل الدخول بنجاح', 'success');
                 setTimeout(() => {
-                    // إخفاء شاشة التحميل بعد تسجيل الدخول
-                    const loadingScreen = document.getElementById('loadingScreen');
-                    if (loadingScreen) loadingScreen.style.display = 'none';
                     loginScreen.style.display = 'none';
                     dashboard.style.display = 'flex';
                     if (currentUserSpan) {
