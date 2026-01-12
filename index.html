@@ -3,203 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المطعم - Restaurant Management System</title>
+    <title>نظام إدارة المطعم - شركة الإبداع الرقمي</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- شاشة تسجيل الدخول -->
-    <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <div class="login-logo">
-                <i class="fas fa-utensils"></i>
-                <h1>نظام إدارة المطعم</h1>
+<body class="light-theme">
+    <!-- إطار النافذة المخصص -->
+    <div class="custom-titlebar" id="titlebar">
+        <div class="titlebar-drag-region">
+            <div class="titlebar-left">
+                <div class="app-icon">🍔</div>
+                <div class="app-title">
+                    <div class="main-title">نظام إدارة المطعم</div>
+                    <div class="sub-title">شركة الإبداع الرقمي</div>
+                </div>
             </div>
-            <form id="loginForm" class="login-form">
-                <div class="form-group">
-                    <label for="username">اسم المستخدم</label>
-                    <input type="text" id="username" class="form-control" required>
+            
+            <div class="titlebar-center">
+                <div class="company-contact">
+                    <span class="phone-number">📞 0781 879 8636</span>
+                    <button class="whatsapp-btn-title" id="whatsappBtnTitle" title="تواصل معنا عبر واتساب">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="password">كلمة المرور</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+            </div>
+
+            <div class="titlebar-right">
+                <button class="theme-toggle" id="themeToggle" title="تبديل الوضع الليلي/النهاري">
+                    <i class="fas fa-moon"></i>
                 </button>
-            </form>
-            <div class="login-footer">
-                <p>Digital Creativity Company © 2025</p>
+                <button class="titlebar-button" id="minimizeBtn" title="تصغير">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
+                <button class="titlebar-button" id="maximizeBtn" title="تكبير">
+                    <i class="fas fa-window-maximize"></i>
+                </button>
+                <button class="titlebar-button close-btn" id="closeBtn" title="إغلاق">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- لوحة التحكم الرئيسية -->
-    <div id="dashboard" class="dashboard" style="display: none;">
-        <!-- شريط التنقل العلوي -->
-        <nav class="navbar">
-            <div class="navbar-brand">
-                <i class="fas fa-utensils"></i>
-                <span>نظام إدارة المطعم</span>
+    <!-- شاشة تسجيل الدخول المحدثة -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-background">
+            <div class="animated-bg"></div>
+        </div>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">
+                    <div class="logo-circle">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h1>نظام إدارة المطعم</h1>
+                    <p class="company-subtitle">شركة الإبداع الرقمي لأنظمة الكاشير</p>
+                </div>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="form-group-modern">
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <input type="text" id="username" class="form-control-modern" placeholder="اسم المستخدم" required>
+                    </div>
+                    
+                    <div class="form-group-modern">
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input type="password" id="password" class="form-control-modern" placeholder="كلمة المرور" required>
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <button type="submit" class="btn-login-modern">
+                        <span>تسجيل الدخول</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </form>
+                
+                <div class="login-footer-modern">
+                    <div class="contact-section">
+                        <p><i class="fas fa-phone"></i> 0781 879 8636</p>
+                        <button class="whatsapp-contact" id="whatsappLogin">
+                            <i class="fab fa-whatsapp"></i> تواصل معنا
+                        </button>
+                    </div>
+                    <p class="copyright">جميع الحقوق محفوظة © 2025</p>
+                </div>
             </div>
-            <div class="navbar-user">
-                <span id="currentUser">المستخدم</span>
-                <button id="logoutBtn" class="btn-icon">
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- شريط التنقل العلوي المحدث -->
+        <nav class="navbar-modern">
+            <div class="navbar-section navbar-section-right">
+                <div class="navbar-brand-modern">
+                    <div class="brand-icon">🍔</div>
+                    <div class="brand-text">
+                        <span class="brand-name">نظام إدارة المطعم</span>
+                        <span class="brand-subtitle">Professional POS System</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="navbar-section navbar-section-center">
+                <div class="quick-stats">
+                    <div class="stat-mini">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span id="quickSales">0</span>
+                    </div>
+                    <div class="stat-mini">
+                        <i class="fas fa-receipt"></i>
+                        <span id="quickInvoices">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar-section navbar-section-left">
+                <div class="navbar-user-modern">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="currentUser">المستخدم</span>
+                        <span class="user-role">مدير النظام</span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn-logout-modern" title="تسجيل الخروج">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </nav>
 
         <!-- المحتوى الرئيسي -->
-        <div class="main-content">
-            <!-- الصفحة الرئيسية -->
+        <div class="main-content-modern">
+            <!-- الصفحة الرئيسية المحدثة -->
             <div id="homePage" class="page active">
-                <div class="page-header">
-                    <h2><i class="fas fa-home"></i> الصفحة الرئيسية</h2>
-                </div>
-
-                <!-- بطاقات الإحصائيات -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>مبيعات اليوم</h3>
-                            <p class="stat-value" id="todaySales">0 IQD</p>
-                        </div>
+                <div class="page-header-modern">
+                    <div class="header-content">
+                        <h2><i class="fas fa-home"></i> لوحة التحكم الرئيسية</h2>
+                        <p class="header-subtitle">نظرة شاملة على أداء مطعمك</p>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>عدد الفواتير</h3>
-                            <p class="stat-value" id="totalInvoices">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-box"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>عدد المنتجات</h3>
-                            <p class="stat-value" id="totalProducts">0</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>عدد الموظفين</h3>
-                            <p class="stat-value" id="totalEmployees">0</p>
-                        </div>
+                    <div class="header-actions">
+                        <div class="current-time" id="currentTime"></div>
                     </div>
                 </div>
 
-                <!-- أقسام النظام -->
-                <div class="sections-header">
-                    <h3>أقسام النظام</h3>
+                <!-- بطاقات الإحصائيات المحدثة -->
+                <div class="stats-grid-modern">
+                    <div class="stat-card-modern primary">
+                        <div class="stat-card-content">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">مبيعات اليوم</span>
+                                <h3 class="stat-value" id="todaySales">0 IQD</h3>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+12.5%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern success">
+                        <div class="stat-card-content">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">عدد الفواتير</span>
+                                <h3 class="stat-value" id="totalInvoices">0</h3>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+8.3%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern warning">
+                        <div class="stat-card-content">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">عدد المنتجات</span>
+                                <h3 class="stat-value" id="totalProducts">0</h3>
+                                <div class="stat-trend neutral">
+                                    <i class="fas fa-minus"></i>
+                                    <span>0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern info">
+                        <div class="stat-card-content">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">عدد الموظفين</span>
+                                <h3 class="stat-value" id="totalEmployees">0</h3>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="sections-grid">
-                    <!-- نقطة البيع -->
-                    <div class="section-card" data-section="pos">
-                        <div class="section-icon">
-                            <i class="fas fa-cash-register"></i>
+                <!-- أقسام النظام المحدثة -->
+                <div class="sections-header-modern">
+                    <h3><i class="fas fa-th"></i> أقسام النظام</h3>
+                    <p>اختر القسم المناسب لإدارة عملك</p>
+                </div>
+
+                <div class="sections-grid-modern">
+                    <div class="section-card-modern" data-section="pos">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-cash-register"></i>
+                            </div>
+                            <div class="section-badge">مميز</div>
                         </div>
                         <h4>نقطة البيع</h4>
-                        <p>إدارة المبيعات والفواتير</p>
+                        <p>إدارة المبيعات والفواتير بسهولة</p>
+                        <div class="section-footer">
+                            <span class="section-count">نشط</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- المنتجات -->
-                    <div class="section-card" data-section="products">
-                        <div class="section-icon">
-                            <i class="fas fa-hamburger"></i>
+                    <div class="section-card-modern" data-section="products">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-hamburger"></i>
+                            </div>
                         </div>
                         <h4>المنتجات</h4>
                         <p>إدارة المنتجات والتصنيفات</p>
+                        <div class="section-footer">
+                            <span class="section-count" id="productsCount">0 منتج</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- الموظفين -->
-                    <div class="section-card" data-section="employees">
-                        <div class="section-icon">
-                            <i class="fas fa-user-tie"></i>
+                    <div class="section-card-modern" data-section="employees">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
                         </div>
                         <h4>الموظفين</h4>
                         <p>إدارة الموظفين والرواتب</p>
+                        <div class="section-footer">
+                            <span class="section-count" id="employeesCount">0 موظف</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- المصاريف -->
-                    <div class="section-card" data-section="expenses">
-                        <div class="section-icon">
-                            <i class="fas fa-money-bill-wave"></i>
+                    <div class="section-card-modern" data-section="expenses">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
                         </div>
                         <h4>المصاريف</h4>
                         <p>تسجيل المصروفات والنفقات</p>
+                        <div class="section-footer">
+                            <span class="section-count">مالي</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- التقارير -->
-                    <div class="section-card" data-section="reports">
-                        <div class="section-icon">
-                            <i class="fas fa-chart-bar"></i>
+                    <div class="section-card-modern" data-section="reports">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
                         </div>
                         <h4>التقارير</h4>
-                        <p>التقارير والإحصائيات</p>
+                        <p>تقارير وإحصائيات شاملة</p>
+                        <div class="section-footer">
+                            <span class="section-count">تحليلات</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- الفواتير -->
-                    <div class="section-card" data-section="invoices">
-                        <div class="section-icon">
-                            <i class="fas fa-file-invoice"></i>
+                    <div class="section-card-modern" data-section="invoices">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
                         </div>
                         <h4>الفواتير</h4>
                         <p>عرض وإدارة الفواتير</p>
+                        <div class="section-footer">
+                            <span class="section-count" id="invoicesCount">0 فاتورة</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- النسخ الاحتياطي -->
-                    <div class="section-card" data-section="backup">
-                        <div class="section-icon">
-                            <i class="fas fa-database"></i>
+                    <div class="section-card-modern" data-section="backup">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-database"></i>
+                            </div>
                         </div>
                         <h4>النسخ الاحتياطي</h4>
                         <p>إدارة النسخ الاحتياطية</p>
+                        <div class="section-footer">
+                            <span class="section-count">آمن</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- نظام الحماية -->
-                    <div class="section-card" data-section="security" id="securitySection">
-                        <div class="section-icon">
-                            <i class="fas fa-shield-alt"></i>
+                    <div class="section-card-modern" data-section="security" id="securitySection">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="section-badge admin">Admin</div>
                         </div>
                         <h4>نظام الحماية</h4>
                         <p>إدارة المستخدمين والصلاحيات</p>
+                        <div class="section-footer">
+                            <span class="section-count">محمي</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
 
-                    <!-- الإعدادات -->
-                    <div class="section-card" data-section="settings">
-                        <div class="section-icon">
-                            <i class="fas fa-cog"></i>
+                    <div class="section-card-modern" data-section="settings">
+                        <div class="section-card-header">
+                            <div class="section-icon-modern">
+                                <i class="fas fa-cog"></i>
+                            </div>
                         </div>
                         <h4>الإعدادات</h4>
                         <p>إعدادات النظام والطباعة</p>
+                        <div class="section-footer">
+                            <span class="section-count">تخصيص</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- صفحات أخرى سيتم تحميلها ديناميكياً -->
+            <!-- صفحات أخرى -->
             <div id="pageContainer"></div>
         </div>
     </div>
 
-    <!-- نافذة منبثقة للإشعارات -->
-    <div id="notification" class="notification"></div>
+    <!-- نافذة الإشعارات المحدثة -->
+    <div id="notification" class="notification-modern"></div>
 
     <!-- تحميل السكربتات -->
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // التحكم في النافذة
+        document.getElementById('minimizeBtn').addEventListener('click', () => {
+            ipcRenderer.send('window-minimize');
+        });
+
+        document.getElementById('maximizeBtn').addEventListener('click', () => {
+            ipcRenderer.send('window-maximize');
+        });
+
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            ipcRenderer.send('window-close');
+        });
+
+        // واتساب
+        function openWhatsApp() {
+            const phone = '9647818798636';
+            const message = 'مرحباً، أريد الاستفسار عن أنظمة الكاشير';
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            require('electron').shell.openExternal(url);
+        }
+
+        document.getElementById('whatsappBtnTitle')?.addEventListener('click', openWhatsApp);
+        document.getElementById('whatsappLogin')?.addEventListener('click', openWhatsApp);
+
+        // إظهار/إخفاء كلمة المرور
+        document.getElementById('togglePassword')?.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // الوقت الحالي
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-IQ', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateString = now.toLocaleDateString('ar-IQ', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const timeEl = document.getElementById('currentTime');
+            if (timeEl) {
+                timeEl.innerHTML = `<i class="fas fa-clock"></i> ${timeString}<br><small>${dateString}</small>`;
+            }
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+    
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/database.js"></script>
+    <script src="js/theme.js"></script>
     <script src="js/app.js"></script>
     <script src="js/pos.js"></script>
     <script src="js/products.js"></script>
