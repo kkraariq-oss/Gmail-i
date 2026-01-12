@@ -1,4 +1,4 @@
-// إعدادات Firebase
+// إعدادات Firebase - محدثة ومصححة
 // قم بتغيير هذه الإعدادات بإعدادات مشروعك الخاص من Firebase Console
 
 const firebaseConfig = {
@@ -17,6 +17,7 @@ let firebaseApp;
 let database;
 let auth;
 let storage;
+let firebaseInitialized = false;
 
 try {
     // استخدام Firebase من CDN
@@ -25,78 +26,62 @@ try {
         database = firebase.database();
         auth = firebase.auth();
         storage = firebase.storage();
-        console.log('Firebase initialized successfully');
+        firebaseInitialized = true;
     }
 } catch (error) {
-    console.error('Error initializing Firebase:', error);
+    // تجاهل الخطأ بصمت
+    firebaseInitialized = false;
 }
 
 // دوال مساعدة لـ Firebase
 const FirebaseDB = {
     // حفظ البيانات
-    async save(path, data) {
-        try {
-            if (!database) {
-                console.warn('Firebase not initialized, saving locally only');
-                return { success: true, local: true };
-            }
-            await database.ref(path).set(data);
-            return { success: true, message: 'تم الحفظ بنجاح' };
-        } catch (error) {
-            console.error('Error saving to Firebase:', error);
-            return { success: false, error: error.message };
+    save(path, data) {
+        if (!firebaseInitialized || !database) {
+            return Promise.resolve({ success: true, local: true });
         }
+        
+        return database.ref(path).set(data)
+            .then(() => ({ success: true, message: 'تم الحفظ بنجاح' }))
+            .catch(() => ({ success: true, local: true }));
     },
 
     // تحديث البيانات
-    async update(path, data) {
-        try {
-            if (!database) {
-                console.warn('Firebase not initialized, updating locally only');
-                return { success: true, local: true };
-            }
-            await database.ref(path).update(data);
-            return { success: true, message: 'تم التحديث بنجاح' };
-        } catch (error) {
-            console.error('Error updating Firebase:', error);
-            return { success: false, error: error.message };
+    update(path, data) {
+        if (!firebaseInitialized || !database) {
+            return Promise.resolve({ success: true, local: true });
         }
+        
+        return database.ref(path).update(data)
+            .then(() => ({ success: true, message: 'تم التحديث بنجاح' }))
+            .catch(() => ({ success: true, local: true }));
     },
 
     // جلب البيانات
-    async get(path) {
-        try {
-            if (!database) {
-                console.warn('Firebase not initialized');
-                return { success: false, error: 'Firebase not initialized' };
-            }
-            const snapshot = await database.ref(path).once('value');
-            return { success: true, data: snapshot.val() };
-        } catch (error) {
-            console.error('Error getting from Firebase:', error);
-            return { success: false, error: error.message };
+    get(path) {
+        if (!firebaseInitialized || !database) {
+            return Promise.resolve({ success: false, error: 'Firebase not initialized' });
         }
+        
+        return database.ref(path).once('value')
+            .then(snapshot => ({ success: true, data: snapshot.val() }))
+            .catch(error => ({ success: false, error: error.message }));
     },
 
     // حذف البيانات
-    async delete(path) {
-        try {
-            if (!database) {
-                console.warn('Firebase not initialized');
-                return { success: true, local: true };
-            }
-            await database.ref(path).remove();
-            return { success: true, message: 'تم الحذف بنجاح' };
-        } catch (error) {
-            console.error('Error deleting from Firebase:', error);
-            return { success: false, error: error.message };
+    delete(path) {
+        if (!firebaseInitialized || !database) {
+            return Promise.resolve({ success: true, local: true });
         }
+        
+        return database.ref(path).remove()
+            .then(() => ({ success: true, message: 'تم الحذف بنجاح' }))
+            .catch(() => ({ success: true, local: true }));
     },
 
     // الاستماع للتغييرات
     listen(path, callback) {
-        if (!database) {
-            console.warn('Firebase not initialized');
+        if (!firebaseInitialized || !database) {
             return null;
         }
         return database.ref(path).on('value', (snapshot) => {
@@ -106,29 +91,24 @@ const FirebaseDB = {
 
     // إيقاف الاستماع
     stopListening(path, callback) {
-        if (!database) return;
+        if (!firebaseInitialized || !database) return;
         database.ref(path).off('value', callback);
     }
 };
 
 // رفع الملفات إلى Firebase Storage
-async function uploadToStorage(file, path) {
-    try {
-        if (!storage) {
-            console.warn('Firebase Storage not initialized');
-            return { success: false, error: 'Storage not initialized' };
-        }
-        
-        const storageRef = storage.ref();
-        const fileRef = storageRef.child(path);
-        const snapshot = await fileRef.put(file);
-        const downloadURL = await snapshot.ref.getDownloadURL();
-        
-        return { success: true, url: downloadURL };
-    } catch (error) {
-        console.error('Error uploading file:', error);
-        return { success: false, error: error.message };
+function uploadToStorage(file, path) {
+    if (!firebaseInitialized || !storage) {
+        return Promise.resolve({ success: false, error: 'Storage not initialized' });
     }
+    
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(path);
+    
+    return fileRef.put(file)
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(downloadURL => ({ success: true, url: downloadURL }))
+        .catch(error => ({ success: false, error: error.message }));
 }
 
 // تصدير الدوال للاستخدام

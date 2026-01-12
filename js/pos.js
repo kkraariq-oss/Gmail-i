@@ -1,4 +1,4 @@
-// نظام نقطة البيع (POS)
+// نظام نقطة البيع (POS) - الإصدار 3.0 المتقدم
 let cart = [];
 let selectedCategory = 'all';
 
@@ -6,58 +6,59 @@ let selectedCategory = 'all';
 function loadPOSPage(container) {
     const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
     
     container.innerHTML = `
         <div class="page active">
-            <div class="page-header">
-                <h2><i class="fas fa-cash-register"></i> نقطة البيع</h2>
-                <button class="btn btn-secondary" onclick="showHomePage()">
-                    <i class="fas fa-home"></i> العودة للرئيسية
-                </button>
-            </div>
-            
-            <div class="pos-container">
-                <div class="products-section">
-                    <div class="categories-tabs" id="categoriesTabs"></div>
+            <!-- حاوية نقطة البيع -->
+            <div class="pos-workspace-v3">
+                <!-- قسم المنتجات -->
+                <div class="products-panel-v3">
+                    <!-- التصنيفات -->
+                    <div class="categories-bar-v3" id="categoriesTabs"></div>
                     
-                    <div class="filters">
-                        <div class="filter-group">
-                            <label>البحث عن منتج</label>
-                            <input type="text" id="searchProduct" class="form-control" placeholder="ابحث بالاسم...">
-                        </div>
+                    <!-- شريط البحث -->
+                    <div class="search-panel-v3">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchProduct" placeholder="ابحث عن منتج بالاسم...">
                     </div>
                     
-                    <div class="products-grid" id="productsGrid"></div>
+                    <!-- شبكة المنتجات -->
+                    <div class="products-grid-v3" id="productsGrid"></div>
                 </div>
                 
-                <div class="cart-section">
+                <!-- قسم السلة -->
+                <div class="cart-panel-v3">
                     <div class="cart-header">
-                        <h3><i class="fas fa-shopping-cart"></i> السلة</h3>
+                        <h3><i class="fas fa-shopping-cart"></i> سلة المشتريات</h3>
+                        <span class="cart-badge" id="cartCount">0</span>
                     </div>
                     
-                    <div class="cart-items" id="cartItems"></div>
+                    <div class="cart-items-container" id="cartItems"></div>
                     
-                    <div class="cart-total">
-                        <div class="total-row">
-                            <span>المجموع الفرعي:</span>
-                            <span id="subtotal">0 IQD</span>
+                    <div class="cart-footer">
+                        <div class="cart-summary">
+                            <div class="summary-row">
+                                <span>المجموع الفرعي:</span>
+                                <span id="subtotal">0 IQD</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>الإجمالي:</span>
+                                <span id="total">0 IQD</span>
+                            </div>
                         </div>
-                        <div class="total-row final">
-                            <span>الإجمالي:</span>
-                            <span id="total">0 IQD</span>
+                        
+                        <div class="cart-buttons">
+                            <button class="btn-cart btn-suspend" onclick="suspendSale()">
+                                <i class="fas fa-pause"></i> تعليق
+                            </button>
+                            <button class="btn-cart btn-clear" onclick="clearCart()">
+                                <i class="fas fa-trash"></i> مسح
+                            </button>
+                            <button class="btn-cart btn-checkout" onclick="processSale()">
+                                <i class="fas fa-check-circle"></i> إتمام البيع
+                            </button>
                         </div>
-                    </div>
-                    
-                    <div class="cart-actions">
-                        <button class="btn btn-warning" onclick="suspendSale()">
-                            <i class="fas fa-pause"></i> تعليق
-                        </button>
-                        <button class="btn btn-danger" onclick="clearCart()">
-                            <i class="fas fa-trash"></i> مسح
-                        </button>
-                        <button class="btn btn-success" onclick="processSale()">
-                            <i class="fas fa-print"></i> بيع
-                        </button>
                     </div>
                 </div>
             </div>
@@ -85,19 +86,22 @@ function renderCategories() {
     if (!categoriesContainer) return;
     
     categoriesContainer.innerHTML = `
-        <div class="category-tab ${selectedCategory === 'all' ? 'active' : ''}" 
+        <div class="category-chip ${selectedCategory === 'all' ? 'active' : ''}" 
              onclick="selectCategory('all')">
-            <i class="fas fa-list"></i> الكل
+            <i class="fas fa-th"></i>
+            <span>الكل</span>
         </div>
     `;
     
     categories.forEach(category => {
-        const tab = createElement('div', {
-            class: `category-tab ${selectedCategory === category.id ? 'active' : ''}`
-        }, `${category.icon} ${category.name}`);
-        
-        tab.addEventListener('click', () => selectCategory(category.id));
-        categoriesContainer.appendChild(tab);
+        const chip = document.createElement('div');
+        chip.className = `category-chip ${selectedCategory === category.id ? 'active' : ''}`;
+        chip.innerHTML = `
+            <span class="emoji">${category.icon}</span>
+            <span>${category.name}</span>
+        `;
+        chip.addEventListener('click', () => selectCategory(category.id));
+        categoriesContainer.appendChild(chip);
     });
 }
 
@@ -115,7 +119,6 @@ function renderProducts(searchTerm = '') {
     
     if (!productsGrid) return;
     
-    // تصفية المنتجات
     let filteredProducts = products;
     
     if (selectedCategory !== 'all') {
@@ -123,74 +126,182 @@ function renderProducts(searchTerm = '') {
     }
     
     if (searchTerm) {
-        filteredProducts = searchArray(filteredProducts, searchTerm, ['name', 'category']);
+        filteredProducts = searchArray(filteredProducts, searchTerm, ['name']);
     }
     
     productsGrid.innerHTML = '';
     
     if (filteredProducts.length === 0) {
-        productsGrid.innerHTML = '<p style="text-align: center; color: #7f8c8d;">لا توجد منتجات</p>';
+        productsGrid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <p>لا توجد منتجات</p>
+                <small>جرب البحث بكلمة أخرى أو اختر تصنيف آخر</small>
+            </div>
+        `;
         return;
     }
     
     filteredProducts.forEach(product => {
-        const productCard = createElement('div', { class: 'product-item' });
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.dataset.productId = product.id;
         
         productCard.innerHTML = `
-            ${product.image ? `<img src="${product.image}" alt="${product.name}" class="product-image">` : '<div class="product-image" style="background: #ecf0f1; display: flex; align-items: center; justify-content: center;"><i class="fas fa-utensils" style="font-size: 40px; color: #bdc3c7;"></i></div>'}
-            <div class="product-name">${product.name}</div>
-            <div class="product-price">${formatCurrency(product.price)}</div>
+            <div class="product-img">
+                ${product.image 
+                    ? `<img src="${product.image}" alt="${product.name}">` 
+                    : `<div class="no-img"><i class="fas fa-utensils"></i></div>`
+                }
+            </div>
+            <div class="product-details">
+                <h4>${product.name}</h4>
+                <p class="price">${formatCurrency(product.price)}</p>
+            </div>
         `;
         
-        productCard.addEventListener('click', () => showQuantityModal(product));
+        // النقر على المنتج بالكامل لفتح نافذة الكمية
+        productCard.addEventListener('click', () => {
+            showQuantityModal(product);
+        });
+        
         productsGrid.appendChild(productCard);
     });
 }
 
-// إظهار نافذة الكمية
+// نافذة إدخال الكمية
 function showQuantityModal(product) {
-    const content = `
-        <div class="form-group">
-            <label>الكمية</label>
-            <input type="number" id="quantity" class="form-control" value="1" min="1">
-        </div>
-        <div class="form-group">
-            <label>السعر</label>
-            <p style="font-size: 20px; font-weight: bold; color: var(--primary-color);">${formatCurrency(product.price)}</p>
+    const modal = document.createElement('div');
+    modal.className = 'quantity-modal-overlay';
+    modal.innerHTML = `
+        <div class="quantity-modal">
+            <div class="quantity-modal-header">
+                <h3>${product.name}</h3>
+                <button class="close-modal" onclick="this.closest('.quantity-modal-overlay').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="quantity-modal-body">
+                ${product.image 
+                    ? `<img src="${product.image}" alt="${product.name}" class="product-preview">` 
+                    : `<div class="product-preview-placeholder"><i class="fas fa-utensils"></i></div>`
+                }
+                <div class="price-display">${formatCurrency(product.price)}</div>
+                <div class="quantity-input-group">
+                    <button class="qty-control" onclick="decreaseQuantity()">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <input type="number" id="quantityInput" value="1" min="1" max="999" class="quantity-input">
+                    <button class="qty-control" onclick="increaseQuantity()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="total-display">
+                    <span>الإجمالي:</span>
+                    <span id="modalTotal">${formatCurrency(product.price)}</span>
+                </div>
+            </div>
+            <div class="quantity-modal-footer">
+                <button class="btn-modal-cancel" onclick="this.closest('.quantity-modal-overlay').remove()">
+                    إلغاء
+                </button>
+                <button class="btn-modal-add" onclick="addToCartFromModal()">
+                    <i class="fas fa-shopping-cart"></i> إضافة للسلة
+                </button>
+            </div>
         </div>
     `;
     
-    createModal(`إضافة: ${product.name}`, content, [
-        {
-            label: 'إلغاء',
-            class: 'btn-secondary'
-        },
-        {
-            label: 'إضافة للسلة',
-            class: 'btn-success',
-            handler: () => {
-                const quantity = parseInt(document.getElementById('quantity').value) || 1;
-                addToCart(product, quantity);
-            }
+    document.body.appendChild(modal);
+    
+    // حفظ بيانات المنتج
+    window.currentModalProduct = product;
+    
+    // تحديث الإجمالي عند تغيير الكمية
+    const quantityInput = document.getElementById('quantityInput');
+    quantityInput.addEventListener('input', updateModalTotal);
+    
+    // focus على input
+    setTimeout(() => quantityInput.focus(), 100);
+    
+    // Enter للإضافة
+    quantityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addToCartFromModal();
         }
-    ]);
+    });
 }
 
-// إضافة للسلة
-function addToCart(product, quantity = 1) {
+function increaseQuantity() {
+    const input = document.getElementById('quantityInput');
+    input.value = Math.min(999, parseInt(input.value) + 1);
+    updateModalTotal();
+}
+
+function decreaseQuantity() {
+    const input = document.getElementById('quantityInput');
+    input.value = Math.max(1, parseInt(input.value) - 1);
+    updateModalTotal();
+}
+
+function updateModalTotal() {
+    const input = document.getElementById('quantityInput');
+    const quantity = parseInt(input.value) || 1;
+    const totalEl = document.getElementById('modalTotal');
+    const product = window.currentModalProduct;
+    
+    if (totalEl && product) {
+        totalEl.textContent = formatCurrency(product.price * quantity);
+    }
+}
+
+function addToCartFromModal() {
+    const input = document.getElementById('quantityInput');
+    const quantity = parseInt(input.value) || 1;
+    const product = window.currentModalProduct;
+    
+    if (!product || quantity < 1) return;
+    
     const existingItem = cart.find(item => item.id === product.id);
     
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
         cart.push({
-            ...product,
-            quantity: quantity
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: quantity,
+            category: product.category || ''
         });
     }
     
     renderCart();
-    showNotification(`تم إضافة ${product.name} للسلة`, 'success');
+    
+    // تشغيل الصوت
+    if (typeof soundManager !== 'undefined') {
+        soundManager.play('addToCart');
+    }
+    
+    // إغلاق النافذة
+    document.querySelector('.quantity-modal-overlay').remove();
+    
+    // رسالة نجاح
+    showQuickToast(`تمت إضافة ${quantity} ${product.name} ✓`);
+}
+
+// عرض رسالة سريعة
+function showQuickToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'quick-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 1500);
 }
 
 // عرض السلة
@@ -198,13 +309,25 @@ function renderCart() {
     const cartItemsContainer = document.getElementById('cartItems');
     const subtotalEl = document.getElementById('subtotal');
     const totalEl = document.getElementById('total');
+    const cartCountEl = document.getElementById('cartCount');
     
     if (!cartItemsContainer) return;
+    
+    // تحديث عدد العناصر
+    if (cartCountEl) {
+        cartCountEl.textContent = cart.length;
+    }
     
     cartItemsContainer.innerHTML = '';
     
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d;">السلة فارغة</p>';
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>السلة فارغة</p>
+                <small>اضغط على أي منتج لإضافته</small>
+            </div>
+        `;
         if (subtotalEl) subtotalEl.textContent = '0 IQD';
         if (totalEl) totalEl.textContent = '0 IQD';
         return;
@@ -213,28 +336,42 @@ function renderCart() {
     let subtotal = 0;
     
     cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
+        const itemTotal = Number(item.price) * Number(item.quantity);
         subtotal += itemTotal;
         
-        const cartItem = createElement('div', { class: 'cart-item' });
+        const cartItem = document.createElement('div');
+        cartItem.className = 'cart-item';
         
         cartItem.innerHTML = `
-            <div class="cart-item-info">
-                <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-details">${formatCurrency(item.price)} × ${item.quantity}</div>
-                <div class="cart-item-quantity">
-                    <button class="qty-btn" onclick="updateQuantity(${index}, -1)">-</button>
-                    <span>${item.quantity}</span>
-                    <button class="qty-btn" onclick="updateQuantity(${index}, 1)">+</button>
-                </div>
-                <div style="font-weight: bold; color: var(--primary-color);">${formatCurrency(itemTotal)}</div>
-            </div>
-            <div class="cart-item-actions">
-                <button class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">
-                    <i class="fas fa-trash"></i>
+            <div class="item-header">
+                <h4>${item.name}</h4>
+                <button class="remove-btn">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
+            <div class="item-controls">
+                <span class="item-price">${formatCurrency(item.price)}</span>
+                <div class="quantity-control">
+                    <button class="qty-btn minus">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <span class="qty">${item.quantity}</span>
+                    <button class="qty-btn plus">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <span class="item-total">${formatCurrency(itemTotal)}</span>
+            </div>
         `;
+        
+        // أحداث الأزرار
+        const removeBtn = cartItem.querySelector('.remove-btn');
+        const minusBtn = cartItem.querySelector('.minus');
+        const plusBtn = cartItem.querySelector('.plus');
+        
+        removeBtn.addEventListener('click', () => removeFromCart(index));
+        minusBtn.addEventListener('click', () => updateQuantity(index, -1));
+        plusBtn.addEventListener('click', () => updateQuantity(index, 1));
         
         cartItemsContainer.appendChild(cartItem);
     });
@@ -250,6 +387,9 @@ function updateQuantity(index, change) {
         
         if (cart[index].quantity <= 0) {
             cart.splice(index, 1);
+            if (typeof soundManager !== 'undefined') {
+                soundManager.play('removeFromCart');
+            }
         }
         
         renderCart();
@@ -258,16 +398,24 @@ function updateQuantity(index, change) {
 
 // إزالة من السلة
 function removeFromCart(index) {
-    cart.splice(index, 1);
-    renderCart();
-    showNotification('تم إزالة المنتج من السلة', 'info');
+    if (cart[index]) {
+        const itemName = cart[index].name;
+        cart.splice(index, 1);
+        renderCart();
+        
+        if (typeof soundManager !== 'undefined') {
+            soundManager.play('removeFromCart');
+        }
+        
+        showNotification(`تم إزالة ${itemName}`, 'info');
+    }
 }
 
 // مسح السلة
 function clearCart() {
     if (cart.length === 0) return;
     
-    if (confirm('هل أنت متأكد من مسح السلة؟')) {
+    if (confirm('هل تريد مسح جميع المنتجات من السلة؟')) {
         cart = [];
         renderCart();
         showNotification('تم مسح السلة', 'info');
@@ -277,59 +425,212 @@ function clearCart() {
 // تعليق البيع
 function suspendSale() {
     if (cart.length === 0) {
-        showNotification('السلة فارغة', 'warning');
+        showNotification('السلة فارغة!', 'warning');
         return;
     }
     
-    const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
-    
-    const suspended = {
-        id: generateId(),
-        items: [...cart],
-        date: new Date().toISOString(),
-        user: currentUser.username
-    };
-    
-    suspendedSales.push(suspended);
-    LocalDB.save(LocalDB.KEYS.SUSPENDED_SALES, suspendedSales);
-    
-    cart = [];
-    renderCart();
-    showNotification('تم تعليق البيع', 'success');
+    try {
+        const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
+        
+        const suspended = {
+            id: generateId(),
+            number: suspendedSales.length + 1,
+            items: JSON.parse(JSON.stringify(cart)),
+            total: cart.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0),
+            date: new Date().toISOString(),
+            user: currentUser ? currentUser.username : 'admin'
+        };
+        
+        suspendedSales.push(suspended);
+        LocalDB.save(LocalDB.KEYS.SUSPENDED_SALES, suspendedSales);
+        
+        cart = [];
+        renderCart();
+        showNotification('تم تعليق البيع بنجاح', 'success');
+        
+        setTimeout(() => navigateToSection('pos'), 500);
+    } catch (error) {
+        console.error('Error suspending sale:', error);
+        showNotification('خطأ في تعليق البيع', 'error');
+    }
 }
 
-// معالجة البيع
-function processSale() {
-    if (cart.length === 0) {
-        showNotification('السلة فارغة', 'warning');
+// إظهار نافذة الإيصالات المعلقة
+function showSuspendedSalesModal() {
+    const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
+    
+    if (suspendedSales.length === 0) {
+        showNotification('لا توجد إيصالات معلقة', 'info');
         return;
     }
     
-    const invoices = LocalDB.get(LocalDB.KEYS.INVOICES) || [];
+    const content = document.createElement('div');
+    content.className = 'suspended-list';
     
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    suspendedSales.forEach((sale) => {
+        const saleCard = document.createElement('div');
+        saleCard.className = 'suspended-card';
+        
+        saleCard.innerHTML = `
+            <div class="suspended-header">
+                <h4><i class="fas fa-receipt"></i> إيصال #${sale.number}</h4>
+                <span class="suspended-date">${formatDate(sale.date)} - ${formatTime(sale.date)}</span>
+            </div>
+            <div class="suspended-info">
+                <p><i class="fas fa-user"></i> ${sale.user}</p>
+                <p><i class="fas fa-shopping-bag"></i> ${sale.items.length} منتج</p>
+                <p class="suspended-amount"><i class="fas fa-dollar-sign"></i> ${formatCurrency(sale.total)}</p>
+            </div>
+            <div class="suspended-actions">
+                <button class="btn btn-success btn-sm load-btn">
+                    <i class="fas fa-download"></i> تحميل
+                </button>
+                <button class="btn btn-danger btn-sm delete-btn">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+            </div>
+        `;
+        
+        const loadBtn = saleCard.querySelector('.load-btn');
+        const deleteBtn = saleCard.querySelector('.delete-btn');
+        
+        loadBtn.addEventListener('click', () => loadSuspendedSale(sale.id));
+        deleteBtn.addEventListener('click', () => deleteSuspendedSale(sale.id));
+        
+        content.appendChild(saleCard);
+    });
     
-    const invoice = {
-        id: generateId(),
-        invoiceNumber: invoices.length + 1,
-        items: [...cart],
-        subtotal: subtotal,
-        total: subtotal,
-        date: new Date().toISOString(),
-        user: currentUser.username,
-        status: 'completed'
-    };
+    createModal('الإيصالات المعلقة', content, [
+        { label: 'إغلاق', class: 'btn-secondary' }
+    ]);
+}
+
+// تحميل إيصال معلق
+function loadSuspendedSale(saleId) {
+    try {
+        const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
+        const sale = suspendedSales.find(s => s.id === saleId);
+        
+        if (!sale) {
+            showNotification('الإيصال غير موجود', 'error');
+            return;
+        }
+        
+        cart = JSON.parse(JSON.stringify(sale.items));
+        renderCart();
+        
+        const filteredSales = suspendedSales.filter(s => s.id !== saleId);
+        LocalDB.save(LocalDB.KEYS.SUSPENDED_SALES, filteredSales);
+        
+        const modal = document.getElementById('dynamicModal');
+        if (modal) modal.remove();
+        
+        showNotification('تم تحميل الإيصال', 'success');
+        setTimeout(() => navigateToSection('pos'), 500);
+    } catch (error) {
+        console.error('Error loading suspended sale:', error);
+        showNotification('خطأ في تحميل الإيصال', 'error');
+    }
+}
+
+// حذف إيصال معلق
+function deleteSuspendedSale(saleId) {
+    if (!confirm('هل تريد حذف هذا الإيصال؟')) return;
     
-    invoices.unshift(invoice);
-    LocalDB.save(LocalDB.KEYS.INVOICES, invoices);
+    try {
+        const suspendedSales = LocalDB.get(LocalDB.KEYS.SUSPENDED_SALES) || [];
+        const filteredSales = suspendedSales.filter(s => s.id !== saleId);
+        
+        LocalDB.save(LocalDB.KEYS.SUSPENDED_SALES, filteredSales);
+        showNotification('تم حذف الإيصال', 'success');
+        
+        const modal = document.getElementById('dynamicModal');
+        if (modal) modal.remove();
+        
+        setTimeout(() => navigateToSection('pos'), 500);
+    } catch (error) {
+        console.error('Error deleting suspended sale:', error);
+        showNotification('خطأ في حذف الإيصال', 'error');
+    }
+}
+
+// معالجة البيع - مع طباعة مزدوجة
+function processSale() {
+    if (cart.length === 0) {
+        showNotification('السلة فارغة!', 'warning');
+        return;
+    }
     
-    // طباعة الفاتورة
-    printInvoice(invoice);
-    
-    // مسح السلة
-    cart = [];
-    renderCart();
-    updateDashboardStats();
-    
-    showNotification('تم إتمام البيع بنجاح', 'success');
+    try {
+        const invoices = LocalDB.get(LocalDB.KEYS.INVOICES) || [];
+        
+        // حساب المجموع
+        const subtotal = cart.reduce((sum, item) => {
+            return sum + (Number(item.price) * Number(item.quantity));
+        }, 0);
+        
+        // إنشاء نسخة آمنة من العناصر
+        const invoiceItems = cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: Number(item.price),
+            quantity: Number(item.quantity),
+            category: item.category || ''
+        }));
+        
+        // إنشاء الفاتورة
+        const invoice = {
+            id: generateId(),
+            invoiceNumber: invoices.length + 1,
+            items: invoiceItems,
+            subtotal: subtotal,
+            total: subtotal,
+            date: new Date().toISOString(),
+            user: currentUser ? currentUser.username : 'admin',
+            status: 'completed'
+        };
+        
+        // حفظ الفاتورة
+        invoices.unshift(invoice);
+        LocalDB.save(LocalDB.KEYS.INVOICES, invoices);
+        
+        // طباعة إيصالين (للمطبخ والكاشير)
+        try {
+            if (typeof printInvoice === 'function') {
+                // طباعة للكاشير
+                printInvoice(invoice, 'cashier');
+                
+                // طباعة للمطبخ
+                setTimeout(() => {
+                    printInvoice(invoice, 'kitchen');
+                }, 1000);
+            }
+        } catch (printError) {
+            console.error('Print error:', printError);
+        }
+        
+        // تشغيل صوت النجاح
+        if (typeof soundManager !== 'undefined') {
+            soundManager.play('completeSale');
+        }
+        
+        // مسح السلة
+        cart = [];
+        renderCart();
+        
+        // تحديث الإحصائيات
+        if (typeof updateDashboardStats === 'function') {
+            updateDashboardStats();
+        }
+        
+        showNotification('تم إتمام البيع بنجاح ✓', 'success');
+        
+    } catch (error) {
+        console.error('Error in processSale:', error);
+        showNotification('خطأ في معالجة البيع: ' + error.message, 'error');
+        
+        if (typeof soundManager !== 'undefined') {
+            soundManager.play('error');
+        }
+    }
 }

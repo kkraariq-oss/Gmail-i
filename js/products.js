@@ -1,158 +1,213 @@
-// إدارة المنتجات
+// نظام إدارة المنتجات - محدث v3.0
+
 function loadProductsPage(container) {
+    const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
+    const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    
     container.innerHTML = `
         <div class="page active">
-            <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="page-header">
                 <h2><i class="fas fa-hamburger"></i> إدارة المنتجات</h2>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-info" onclick="showManageCategoriesModal()">
-                        <i class="fas fa-tags"></i> إدارة التصنيفات
-                    </button>
+                <div class="page-actions">
                     <button class="btn btn-success" onclick="showAddProductModal()">
                         <i class="fas fa-plus"></i> إضافة منتج
                     </button>
-                    <button class="btn btn-secondary" onclick="showHomePage()">
-                        <i class="fas fa-home"></i> العودة
+                    <button class="btn btn-primary" onclick="showManageCategoriesModal()">
+                        <i class="fas fa-tags"></i> إدارة التصنيفات
                     </button>
                 </div>
             </div>
-            
-            <div class="filters">
-                <div class="filter-group">
-                    <label>البحث</label>
-                    <input type="text" id="searchProducts" class="form-control" placeholder="ابحث بالاسم...">
+
+            <!-- البحث والفلترة -->
+            <div class="filters-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchProducts" placeholder="ابحث عن منتج...">
                 </div>
-                <div class="filter-group">
-                    <label>التصنيف</label>
-                    <select id="filterCategory" class="form-control">
-                        <option value="">جميع التصنيفات</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>الترتيب</label>
-                    <select id="sortProducts" class="form-control">
-                        <option value="name_asc">الاسم (أ-ي)</option>
-                        <option value="name_desc">الاسم (ي-أ)</option>
-                        <option value="price_asc">السعر (من الأقل)</option>
-                        <option value="price_desc">السعر (من الأعلى)</option>
-                    </select>
-                </div>
+                <select id="filterCategory" class="filter-select">
+                    <option value="">جميع التصنيفات</option>
+                    ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                </select>
             </div>
-            
-            <div class="card">
-                <div class="card-body" id="productsTableContainer"></div>
+
+            <!-- جدول المنتجات -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>اسم المنتج</th>
+                            <th>التصنيف</th>
+                            <th>السعر</th>
+                            <th>أضيف بواسطة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody"></tbody>
+                </table>
             </div>
         </div>
     `;
     
-    loadCategoryFilter();
     renderProductsTable();
     
-    // معالجة البحث
+    // البحث
     document.getElementById('searchProducts').addEventListener('input', renderProductsTable);
     document.getElementById('filterCategory').addEventListener('change', renderProductsTable);
-    document.getElementById('sortProducts').addEventListener('change', renderProductsTable);
 }
 
-// تحميل تصنيفات الفلتر
-function loadCategoryFilter() {
-    const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
-    const filterSelect = document.getElementById('filterCategory');
-    
-    if (!filterSelect) return;
-    
-    categories.forEach(cat => {
-        const option = createElement('option', { value: cat.id }, `${cat.icon} ${cat.name}`);
-        filterSelect.appendChild(option);
-    });
-}
-
-// عرض جدول المنتجات
 function renderProductsTable() {
-    let products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
+    const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
-    const container = document.getElementById('productsTableContainer');
+    const tbody = document.getElementById('productsTableBody');
     
-    if (!container) return;
+    if (!tbody) return;
     
-    // البحث
     const searchTerm = document.getElementById('searchProducts')?.value || '';
+    const filterCategory = document.getElementById('filterCategory')?.value || '';
+    
+    let filtered = products;
+    
     if (searchTerm) {
-        products = searchArray(products, searchTerm, ['name']);
+        filtered = searchArray(filtered, searchTerm, ['name', 'category']);
     }
     
-    // التصفية بالتصنيف
-    const categoryFilter = document.getElementById('filterCategory')?.value || '';
-    if (categoryFilter) {
-        products = products.filter(p => p.category === categoryFilter);
+    if (filterCategory) {
+        filtered = filtered.filter(p => p.category === filterCategory);
     }
     
-    // الترتيب
-    const sortBy = document.getElementById('sortProducts')?.value || 'name_asc';
-    const [field, order] = sortBy.split('_');
-    products = sortArray(products, field, order);
+    tbody.innerHTML = '';
     
-    if (products.length === 0) {
-        container.innerHTML = '<p class="text-center">لا توجد منتجات</p>';
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-box-open" style="font-size: 48px; display: block; margin-bottom: 16px;"></i>
+                    لا توجد منتجات
+                </td>
+            </tr>
+        `;
         return;
     }
     
-    const rows = products.map(product => {
+    filtered.forEach(product => {
         const category = categories.find(c => c.id === product.category);
-        return {
-            image: product.image ? `<img src="${product.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">` : '<i class="fas fa-image"></i>',
-            name: product.name,
-            category: category ? `${category.icon} ${category.name}` : '-',
-            price: formatCurrency(product.price),
-            data: product
-        };
+        const addedBy = product.addedBy || 'admin';
+        const addedByDisplay = addedBy === (window.currentUser ? window.currentUser.username : 'admin') ? 
+            `<span class="badge badge-success"><i class="fas fa-user-shield"></i> أنت</span>` : 
+            `<span class="badge badge-secondary"><i class="fas fa-user"></i> ${addedBy}</span>`;
+        
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td>
+                ${product.image 
+                    ? `<img src="${product.image}" alt="${product.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` 
+                    : `<div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f5f7fa, #c3cfe2); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><i class="fas fa-utensils" style="font-size: 24px; color: #bdc3c7;"></i></div>`
+                }
+            </td>
+            <td style="font-weight: 700; font-size: 15px;">${product.name}</td>
+            <td>
+                <span class="badge badge-info">
+                    ${category ? category.icon + ' ' + category.name : 'غير محدد'}
+                </span>
+            </td>
+            <td style="font-weight: 800; color: var(--primary-color); font-size: 16px;">${formatCurrency(product.price)}</td>
+            <td>
+                ${addedByDisplay}
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-icon btn-info" onclick="viewProductDetails('${product.id}')" title="عرض التفاصيل">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-icon btn-warning" onclick="editProduct('${product.id}')" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${window.currentUser && window.currentUser.role === 'admin' ? `
+                    <button class="btn-icon btn-danger" onclick="deleteProduct('${product.id}')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
     });
-    
-    const table = createTable(
-        ['الصورة', 'اسم المنتج', 'التصنيف', 'السعر'],
-        rows,
-        [
-            {
-                label: 'تعديل',
-                class: 'btn-warning',
-                icon: 'fas fa-edit',
-                handler: (row) => showEditProductModal(row.data)
-            },
-            {
-                label: 'حذف',
-                class: 'btn-danger',
-                icon: 'fas fa-trash',
-                handler: (row) => deleteProduct(row.data.id)
-            }
-        ]
-    );
-    
-    container.innerHTML = '';
-    container.appendChild(table);
 }
 
-// إضافة منتج جديد
+// عرض تفاصيل المنتج
+function viewProductDetails(productId) {
+    const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
+    const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+        showNotification('المنتج غير موجود', 'error');
+        return;
+    }
+    
+    const category = categories.find(c => c.id === product.category);
+    
+    const content = document.createElement('div');
+    content.className = 'product-details-view';
+    content.innerHTML = `
+        <div class="product-detail-card">
+            <div class="product-detail-image">
+                ${product.image 
+                    ? `<img src="${product.image}" alt="${product.name}">` 
+                    : `<div class="no-image"><i class="fas fa-utensils"></i></div>`
+                }
+            </div>
+            <div class="product-detail-info">
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-tag"></i> اسم المنتج:</span>
+                    <span class="detail-value">${product.name}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-list"></i> التصنيف:</span>
+                    <span class="detail-value">${category ? category.icon + ' ' + category.name : 'غير محدد'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-dollar-sign"></i> السعر:</span>
+                    <span class="detail-value price">${formatCurrency(product.price)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-user"></i> أضيف بواسطة:</span>
+                    <span class="detail-value">${product.addedBy || 'admin'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-clock"></i> تاريخ الإضافة:</span>
+                    <span class="detail-value">${product.createdAt ? new Date(product.createdAt).toLocaleString('ar-IQ') : 'غير محدد'}</span>
+                </div>
+                ${product.description ? `
+                <div class="detail-row full-width">
+                    <span class="detail-label"><i class="fas fa-info-circle"></i> الوصف:</span>
+                    <span class="detail-value">${product.description}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    createModal('تفاصيل المنتج', content, [
+        { label: 'تعديل', class: 'btn-warning', callback: () => { document.getElementById('dynamicModal').remove(); editProduct(productId); } },
+        { label: 'إغلاق', class: 'btn-secondary' }
+    ]);
+}
+
+// إضافة منتج
 function showAddProductModal() {
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
     
-    const content = `
-        <form id="addProductForm">
-            <div class="form-group">
-                <label>صورة المنتج</label>
-                <div class="product-image-upload" id="imageUpload">
-                    <div class="upload-placeholder">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>انقر لرفع صورة</p>
-                    </div>
-                </div>
-                <input type="file" id="productImage" accept="image/*" style="display: none;">
-            </div>
-            
+    const content = document.createElement('div');
+    content.innerHTML = `
+        <form id="addProductForm" class="modal-form">
             <div class="form-group">
                 <label>اسم المنتج</label>
                 <input type="text" id="productName" class="form-control" required>
             </div>
-            
             <div class="form-group">
                 <label>التصنيف</label>
                 <select id="productCategory" class="form-control" required>
@@ -160,300 +215,271 @@ function showAddProductModal() {
                     ${categories.map(cat => `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`).join('')}
                 </select>
             </div>
-            
             <div class="form-group">
-                <label>السعر</label>
-                <input type="number" id="productPrice" class="form-control" min="0" step="0.01" required>
+                <label>السعر (IQD)</label>
+                <input type="number" id="productPrice" class="form-control" required min="0" step="100">
             </div>
-            
             <div class="form-group">
                 <label>الوصف (اختياري)</label>
                 <textarea id="productDescription" class="form-control" rows="3"></textarea>
             </div>
+            <div class="form-group">
+                <label>صورة المنتج (اختياري)</label>
+                <input type="file" id="productImage" class="form-control" accept="image/*">
+            </div>
         </form>
     `;
     
-    const modal = createModal('إضافة منتج جديد', content, [
-        {
-            label: 'إلغاء',
-            class: 'btn-secondary'
-        },
-        {
-            label: 'إضافة',
+    createModal('إضافة منتج جديد', content, [
+        { 
+            label: 'إضافة', 
             class: 'btn-success',
-            handler: () => {
+            callback: () => {
                 const form = document.getElementById('addProductForm');
                 if (form.checkValidity()) {
                     addProduct();
                 } else {
                     form.reportValidity();
                 }
-            },
-            closeOnClick: false
-        }
-    ]);
-    
-    // رفع الصورة
-    setupImageUpload();
-}
-
-let selectedProductImage = null;
-
-// إعداد رفع الصورة
-function setupImageUpload() {
-    const imageUpload = document.getElementById('imageUpload');
-    const imageInput = document.getElementById('productImage');
-    
-    if (imageUpload && imageInput) {
-        imageUpload.addEventListener('click', () => imageInput.click());
-        
-        imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                selectedProductImage = await readFileAsBase64(file);
-                imageUpload.innerHTML = `<img src="${selectedProductImage}" alt="منتج">`;
             }
-        });
-    }
+        },
+        { label: 'إلغاء', class: 'btn-secondary' }
+    ]);
 }
 
-// إضافة المنتج
-async function addProduct() {
+function addProduct() {
     const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
     
-    const newProduct = {
+    const name = document.getElementById('productName').value;
+    const category = document.getElementById('productCategory').value;
+    const price = parseFloat(document.getElementById('productPrice').value);
+    const description = document.getElementById('productDescription').value;
+    const imageInput = document.getElementById('productImage');
+    
+    const product = {
         id: generateId(),
-        name: document.getElementById('productName').value,
-        category: document.getElementById('productCategory').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        description: document.getElementById('productDescription').value || '',
-        image: selectedProductImage || '',
+        name,
+        category,
+        price,
+        description,
+        image: '',
+        addedBy: window.currentUser ? window.currentUser.username : 'admin',
         createdAt: new Date().toISOString()
     };
     
-    products.push(newProduct);
-    LocalDB.save(LocalDB.KEYS.PRODUCTS, products);
-    
-    selectedProductImage = null;
-    
-    showNotification('تم إضافة المنتج بنجاح', 'success');
-    renderProductsTable();
-    updateDashboardStats();
-    
-    const modal = document.getElementById('dynamicModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.remove();
+    if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            product.image = e.target.result;
+            products.push(product);
+            LocalDB.save(LocalDB.KEYS.PRODUCTS, products);
+            renderProductsTable();
+            document.getElementById('dynamicModal').remove();
+            showNotification('تم إضافة المنتج بنجاح', 'success');
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    } else {
+        products.push(product);
+        LocalDB.save(LocalDB.KEYS.PRODUCTS, products);
+        renderProductsTable();
+        document.getElementById('dynamicModal').remove();
+        showNotification('تم إضافة المنتج بنجاح', 'success');
     }
 }
 
 // تعديل منتج
-function showEditProductModal(product) {
+function editProduct(productId) {
+    const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
-    selectedProductImage = product.image;
+    const product = products.find(p => p.id === productId);
     
-    const content = `
-        <form id="editProductForm">
-            <div class="form-group">
-                <label>صورة المنتج</label>
-                <div class="product-image-upload" id="imageUpload">
-                    ${product.image ? `<img src="${product.image}" alt="منتج">` : `
-                        <div class="upload-placeholder">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>انقر لرفع صورة</p>
-                        </div>
-                    `}
-                </div>
-                <input type="file" id="productImage" accept="image/*" style="display: none;">
-            </div>
-            
+    if (!product) return;
+    
+    const content = document.createElement('div');
+    content.innerHTML = `
+        <form id="editProductForm" class="modal-form">
             <div class="form-group">
                 <label>اسم المنتج</label>
-                <input type="text" id="productName" class="form-control" value="${product.name}" required>
+                <input type="text" id="editProductName" class="form-control" value="${product.name}" required>
             </div>
-            
             <div class="form-group">
                 <label>التصنيف</label>
-                <select id="productCategory" class="form-control" required>
-                    ${categories.map(cat => 
-                        `<option value="${cat.id}" ${cat.id === product.category ? 'selected' : ''}>${cat.icon} ${cat.name}</option>`
-                    ).join('')}
+                <select id="editProductCategory" class="form-control" required>
+                    <option value="">اختر التصنيف</option>
+                    ${categories.map(cat => `
+                        <option value="${cat.id}" ${cat.id === product.category ? 'selected' : ''}>
+                            ${cat.icon} ${cat.name}
+                        </option>
+                    `).join('')}
                 </select>
             </div>
-            
             <div class="form-group">
-                <label>السعر</label>
-                <input type="number" id="productPrice" class="form-control" value="${product.price}" min="0" step="0.01" required>
+                <label>السعر (IQD)</label>
+                <input type="number" id="editProductPrice" class="form-control" value="${product.price}" required min="0" step="100">
             </div>
-            
             <div class="form-group">
                 <label>الوصف (اختياري)</label>
-                <textarea id="productDescription" class="form-control" rows="3">${product.description || ''}</textarea>
+                <textarea id="editProductDescription" class="form-control" rows="3">${product.description || ''}</textarea>
             </div>
+            <div class="form-group">
+                <label>تغيير الصورة (اختياري)</label>
+                <input type="file" id="editProductImage" class="form-control" accept="image/*">
+            </div>
+            ${product.image ? `<img src="${product.image}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">` : ''}
         </form>
     `;
     
-    createModal('تعديل منتج', content, [
-        {
-            label: 'إلغاء',
-            class: 'btn-secondary'
-        },
-        {
-            label: 'حفظ',
+    createModal('تعديل المنتج', content, [
+        { 
+            label: 'حفظ', 
             class: 'btn-success',
-            handler: () => updateProduct(product.id),
-            closeOnClick: false
-        }
+            callback: () => {
+                const form = document.getElementById('editProductForm');
+                if (form.checkValidity()) {
+                    saveProductEdit(productId);
+                } else {
+                    form.reportValidity();
+                }
+            }
+        },
+        { label: 'إلغاء', class: 'btn-secondary' }
     ]);
-    
-    setupImageUpload();
 }
 
-// تحديث المنتج
-function updateProduct(productId) {
+function saveProductEdit(productId) {
     const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
     const index = products.findIndex(p => p.id === productId);
     
-    if (index !== -1) {
-        products[index] = {
-            ...products[index],
-            name: document.getElementById('productName').value,
-            category: document.getElementById('productCategory').value,
-            price: parseFloat(document.getElementById('productPrice').value),
-            description: document.getElementById('productDescription').value || '',
-            image: selectedProductImage || '',
-            updatedAt: new Date().toISOString()
+    if (index === -1) return;
+    
+    const product = products[index];
+    product.name = document.getElementById('editProductName').value;
+    product.category = document.getElementById('editProductCategory').value;
+    product.price = parseFloat(document.getElementById('editProductPrice').value);
+    product.description = document.getElementById('editProductDescription').value;
+    
+    const imageInput = document.getElementById('editProductImage');
+    
+    if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            product.image = e.target.result;
+            LocalDB.save(LocalDB.KEYS.PRODUCTS, products);
+            renderProductsTable();
+            document.getElementById('dynamicModal').remove();
+            showNotification('تم تحديث المنتج بنجاح', 'success');
         };
-        
+        reader.readAsDataURL(imageInput.files[0]);
+    } else {
         LocalDB.save(LocalDB.KEYS.PRODUCTS, products);
-        showNotification('تم تحديث المنتج بنجاح', 'success');
         renderProductsTable();
-        
-        const modal = document.getElementById('dynamicModal');
-        if (modal) {
-            modal.style.display = 'none';
-            modal.remove();
-        }
+        document.getElementById('dynamicModal').remove();
+        showNotification('تم تحديث المنتج بنجاح', 'success');
     }
 }
 
 // حذف منتج
 function deleteProduct(productId) {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-        const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
-        const filtered = products.filter(p => p.id !== productId);
-        
-        LocalDB.save(LocalDB.KEYS.PRODUCTS, filtered);
-        showNotification('تم حذف المنتج بنجاح', 'success');
-        renderProductsTable();
-        updateDashboardStats();
-    }
+    if (!confirm('هل تريد حذف هذا المنتج؟')) return;
+    
+    const products = LocalDB.get(LocalDB.KEYS.PRODUCTS) || [];
+    const filtered = products.filter(p => p.id !== productId);
+    
+    LocalDB.save(LocalDB.KEYS.PRODUCTS, filtered);
+    renderProductsTable();
+    showNotification('تم حذف المنتج بنجاح', 'success');
 }
 
 // إدارة التصنيفات
 function showManageCategoriesModal() {
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
     
-    const content = `
-        <div style="margin-bottom: 20px;">
-            <button class="btn btn-success" onclick="showAddCategoryForm()">
-                <i class="fas fa-plus"></i> إضافة تصنيف
-            </button>
-        </div>
-        
-        <div id="categoriesList">
-            ${categories.map(cat => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
-                    <div>
-                        <span style="font-size: 24px;">${cat.icon}</span>
-                        <span style="margin-right: 10px; font-weight: bold;">${cat.name}</span>
-                    </div>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCategory('${cat.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
+    const content = document.createElement('div');
+    content.innerHTML = `
+        <div class="categories-manager">
+            <div class="categories-list" id="categoriesList"></div>
+            <div class="add-category-form">
+                <h4>إضافة تصنيف جديد</h4>
+                <div class="form-group">
+                    <input type="text" id="newCategoryName" class="form-control" placeholder="اسم التصنيف">
                 </div>
-            `).join('')}
+                <div class="form-group">
+                    <input type="text" id="newCategoryIcon" class="form-control" placeholder="الأيقونة (emoji)">
+                </div>
+                <button class="btn btn-success" onclick="addCategory()">
+                    <i class="fas fa-plus"></i> إضافة
+                </button>
+            </div>
         </div>
     `;
     
     createModal('إدارة التصنيفات', content, [
-        {
-            label: 'إغلاق',
-            class: 'btn-secondary'
-        }
+        { label: 'إغلاق', class: 'btn-secondary' }
     ]);
-}
-
-// نموذج إضافة تصنيف
-function showAddCategoryForm() {
-    const content = `
-        <form id="addCategoryForm">
-            <div class="form-group">
-                <label>أيقونة التصنيف (Emoji)</label>
-                <input type="text" id="categoryIcon" class="form-control" placeholder="مثال: 🍔" required>
-            </div>
-            
-            <div class="form-group">
-                <label>اسم التصنيف</label>
-                <input type="text" id="categoryName" class="form-control" required>
-            </div>
-        </form>
-    `;
     
-    createModal('إضافة تصنيف', content, [
-        {
-            label: 'إلغاء',
-            class: 'btn-secondary'
-        },
-        {
-            label: 'إضافة',
-            class: 'btn-success',
-            handler: () => {
-                const form = document.getElementById('addCategoryForm');
-                if (form.checkValidity()) {
-                    addCategory();
-                }
-            },
-            closeOnClick: false
-        }
-    ]);
+    renderCategoriesList();
 }
 
-// إضافة تصنيف
-function addCategory() {
+function renderCategoriesList() {
     const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    const list = document.getElementById('categoriesList');
     
-    const newCategory = {
-        id: generateId(),
-        name: document.getElementById('categoryName').value,
-        icon: document.getElementById('categoryIcon').value
-    };
+    if (!list) return;
     
-    categories.push(newCategory);
-    LocalDB.save(LocalDB.KEYS.CATEGORIES, categories);
+    list.innerHTML = '';
     
-    showNotification('تم إضافة التصنيف بنجاح', 'success');
-    
-    // إغلاق المودال وإعادة فتح إدارة التصنيفات
-    const modal = document.getElementById('dynamicModal');
-    if (modal) modal.remove();
-    
-    setTimeout(() => showManageCategoriesModal(), 100);
+    categories.forEach(category => {
+        const div = document.createElement('div');
+        div.className = 'category-item';
+        div.innerHTML = `
+            <span class="category-icon">${category.icon}</span>
+            <span class="category-name">${category.name}</span>
+            <button class="btn-icon btn-danger" onclick="deleteCategory('${category.id}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        list.appendChild(div);
+    });
 }
 
-// حذف تصنيف
-function deleteCategory(categoryId) {
-    if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
-        const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
-        const filtered = categories.filter(c => c.id !== categoryId);
-        
-        LocalDB.save(LocalDB.KEYS.CATEGORIES, filtered);
-        showNotification('تم حذف التصنيف بنجاح', 'success');
-        
-        // إعادة فتح إدارة التصنيفات
-        const modal = document.getElementById('dynamicModal');
-        if (modal) modal.remove();
-        
-        setTimeout(() => showManageCategoriesModal(), 100);
+function addCategory() {
+    const name = document.getElementById('newCategoryName').value.trim();
+    const icon = document.getElementById('newCategoryIcon').value.trim();
+    
+    if (!name || !icon) {
+        showNotification('يرجى إدخال اسم التصنيف والأيقونة', 'warning');
+        return;
     }
+    
+    const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    categories.push({
+        id: generateId(),
+        name,
+        icon
+    });
+    
+    LocalDB.save(LocalDB.KEYS.CATEGORIES, categories);
+    renderCategoriesList();
+    document.getElementById('newCategoryName').value = '';
+    document.getElementById('newCategoryIcon').value = '';
+    showNotification('تم إضافة التصنيف بنجاح', 'success');
 }
+
+function deleteCategory(categoryId) {
+    if (!confirm('هل تريد حذف هذا التصنيف؟')) return;
+    
+    const categories = LocalDB.get(LocalDB.KEYS.CATEGORIES) || [];
+    const filtered = categories.filter(c => c.id !== categoryId);
+    
+    LocalDB.save(LocalDB.KEYS.CATEGORIES, filtered);
+    renderCategoriesList();
+    showNotification('تم حذف التصنيف بنجاح', 'success');
+}
+
+window.viewProductDetails = viewProductDetails;
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
+window.showAddProductModal = showAddProductModal;
+window.showManageCategoriesModal = showManageCategoriesModal;
+window.addCategory = addCategory;
+window.deleteCategory = deleteCategory;

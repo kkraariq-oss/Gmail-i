@@ -1,147 +1,151 @@
-// نظام الطباعة
-function printInvoice(invoice) {
+// نظام الطباعة المتقدم - إصدار 3.0
+// يدعم الطباعة المزدوجة (مطبخ + كاشير)
+
+window.isElectron = window.isElectron || (typeof require !== 'undefined' && typeof require('electron') !== 'undefined');
+window.ipcRenderer = window.ipcRenderer || undefined;
+
+if (window.isElectron) {
+    try {
+        window.ipcRenderer = window.ipcRenderer || require('electron').ipcRenderer;
+    } catch (error) {
+        console.log('Running in browser mode');
+    }
+}
+
+async function printInvoice(invoice, printerType = 'both') {
     const settings = LocalDB.get(LocalDB.KEYS.SETTINGS) || {};
     
-    // إنشاء نافذة الطباعة
-    const printWindow = window.open('', '_blank', 'width=300,height=600');
-    
-    if (!printWindow) {
-        showNotification('فشل فتح نافذة الطباعة. تأكد من السماح بالنوافذ المنبثقة', 'error');
-        return;
+    // في بيئة Electron: استخدام الطباعة الحرارية الصامتة تلقائياً
+    if (window.isElectron && window.ipcRenderer) {
+        return await thermalPrint(invoice, printerType);
     }
     
-    const itemsHtml = invoice.items.map(item => `
-        <tr>
-            <td>${item.name}</td>
-            <td>${item.quantity}</td>
-            <td>${formatCurrency(item.price)}</td>
-            <td>${formatCurrency(item.price * item.quantity)}</td>
-        </tr>
-    `).join('');
-    
-    const fontSize = settings.fontSize === 'small' ? '10px' : 
-                    settings.fontSize === 'large' ? '14px' : '12px';
-    
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="ar" dir="rtl">
-        <head>
-            <meta charset="UTF-8">
-            <title>فاتورة رقم ${invoice.invoiceNumber}</title>
-            <style>
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-                body {
-                    font-family: 'Arial', sans-serif;
-                    padding: 10px;
-                    font-size: ${fontSize};
-                }
-                .header {
-                    text-align: center;
-                    margin-bottom: 15px;
-                }
-                .header h1 {
-                    font-size: 18px;
-                    margin-bottom: 5px;
-                }
-                .header p {
-                    margin: 3px 0;
-                    font-size: 11px;
-                }
-                .invoice-info {
-                    margin: 15px 0;
-                    padding: 10px;
-                    border-top: 2px dashed #000;
-                    border-bottom: 2px dashed #000;
-                }
-                .invoice-info p {
-                    margin: 3px 0;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 10px 0;
-                }
-                th, td {
-                    text-align: right;
-                    padding: 5px 2px;
-                    border-bottom: 1px solid #ddd;
-                }
-                th {
-                    font-weight: bold;
-                }
-                .total {
-                    margin-top: 10px;
-                    padding-top: 10px;
-                    border-top: 2px solid #000;
-                    text-align: left;
-                    font-size: 16px;
-                    font-weight: bold;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 15px;
-                    padding-top: 10px;
-                    border-top: 2px dashed #000;
-                }
-                @media print {
-                    body {
-                        width: 80mm;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>${settings.restaurantName || 'مطعم الوجبات السريعة'}</h1>
-                <p>${settings.restaurantPhone || ''}</p>
-                <p>${settings.restaurantAddress || ''}</p>
-                ${settings.invoiceHeader ? `<p><strong>${settings.invoiceHeader}</strong></p>` : ''}
-            </div>
+    // في المتصفح: طباعة عادية
+    return await browserPrint(invoice, printerType);
+}
+
+async function thermalPrint(invoice, printerType) {
+    try {
+        const types = printerType === 'both' ? ['kitchen', 'cashier'] : [printerType];
+        
+        for (const type of types) {
+            const content = generateReceiptHTML(invoice, type);
             
-            <div class="invoice-info">
-                <p><strong>رقم الفاتورة:</strong> ${invoice.invoiceNumber}</p>
-                <p><strong>التاريخ:</strong> ${formatDate(invoice.date)}</p>
-                <p><strong>الوقت:</strong> ${formatTime(invoice.date)}</p>
-                <p><strong>الكاشير:</strong> ${invoice.user || 'النظام'}</p>
-            </div>
+            const result = await window.ipcRenderer.invoke('thermal-print', {
+                type: type,
+                content: content
+            });
             
-            <table>
-                <thead>
-                    <tr>
-                        <th>الصنف</th>
-                        <th>الكمية</th>
-                        <th>السعر</th>
-                        <th>المجموع</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHtml}
-                </tbody>
-            </table>
+            if (!result.success) {
+                console.error(`طباعة ${type} فشلت:`, result.error);
+            }
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Thermal print error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+async function browserPrint(invoice, printerType) {
+    try {
+        const types = printerType === 'both' ? ['cashier', 'kitchen'] : [printerType];
+        
+        for (const type of types) {
+            const content = generateReceiptHTML(invoice, type);
+            const printWindow = window.open('', '', 'height=600,width=400');
             
-            <div class="total">
-                الإجمالي: ${formatCurrency(invoice.total)}
-            </div>
+            printWindow.document.write(content);
+            printWindow.document.close();
             
-            <div class="footer">
-                <p>${settings.invoiceFooter || 'شكراً لزيارتكم'}</p>
-                <p>${settings.restaurantName || ''}</p>
-            </div>
-        </body>
-        </html>
-    `);
-    
-    printWindow.document.close();
-    
-    // الطباعة التلقائية
-    if (settings.printAutomatically) {
-        setTimeout(() => {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             printWindow.print();
-            printWindow.close();
-        }, 500);
+            
+            setTimeout(() => printWindow.close(), 1000);
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Browser print error:', error);
+        return { success: false, error: error.message };
     }
+}
+
+function generateReceiptHTML(invoice, type) {
+    const settings = LocalDB.get(LocalDB.KEYS.SETTINGS) || {};
+    const isKitchen = type === 'kitchen';
+    const title = isKitchen ? 'إيصال المطبخ' : 'إيصال الكاشير';
+    
+    let html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <style>
+        body { font-family: Arial; width: 80mm; padding: 10mm; font-size: 12pt; }
+        .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 15px; }
+        .restaurant-name { font-size: 20pt; font-weight: bold; }
+        .receipt-type { font-size: 16pt; font-weight: bold; padding: 8px; text-align: center; background: ${isKitchen ? '#f39c12' : '#2ecc71'}; color: white; margin: 10px 0; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .items-table th { background: #f5f5f5; padding: 8px 5px; border-bottom: 2px solid #000; }
+        .items-table td { padding: 8px 5px; border-bottom: 1px dashed #ccc; }
+        .item-qty { font-size: ${isKitchen ? '20pt' : '16pt'}; font-weight: bold; background: ${isKitchen ? '#e74c3c' : '#f39c12'}; color: white; padding: 2px 8px; border-radius: 3px; }
+        .total-row { display: flex; justify-content: space-between; margin: 5px 0; }
+        .receipt-footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #000; }
+    </style>
+</head>
+<body>
+    <div class="receipt-header">
+        <div class="restaurant-name">${settings.restaurantName || 'مطعم الوجبات السريعة'}</div>
+        <div>${settings.restaurantPhone || '07XXXXXXXXX'}</div>
+    </div>
+    <div class="receipt-type">${title}</div>
+    <div style="margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>رقم الفاتورة:</span><strong>#${invoice.invoiceNumber}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>التاريخ:</span><strong>${formatDate(invoice.date)} ${formatTime(invoice.date)}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>الكاشير:</span><strong>${invoice.user}</strong>
+        </div>
+    </div>
+    <table class="items-table">
+        <thead><tr>
+            <th>الصنف</th>
+            <th style="width: 60px; text-align: center;">العدد</th>
+            ${!isKitchen ? '<th style="width: 80px; text-align: left;">السعر</th>' : ''}
+        </tr></thead>
+        <tbody>`;
+    
+    invoice.items.forEach(item => {
+        html += `<tr>
+            <td style="font-weight: bold;">${item.name}</td>
+            <td style="text-align: center;"><span class="item-qty">${item.quantity}</span></td>
+            ${!isKitchen ? `<td style="text-align: left;">${formatCurrency(item.price * item.quantity)}</td>` : ''}
+        </tr>`;
+    });
+    
+    html += `</tbody></table>`;
+    
+    if (!isKitchen) {
+        html += `<div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;">
+            <div class="total-row"><span>المجموع الفرعي:</span><strong>${formatCurrency(invoice.subtotal)}</strong></div>
+            <div class="total-row" style="font-size: 16pt; font-weight: bold; border-top: 2px dashed #000; padding-top: 10px; margin-top: 10px;">
+                <span>الإجمالي:</span><strong>${formatCurrency(invoice.total)}</strong>
+            </div>
+        </div>`;
+    }
+    
+    html += `<div class="receipt-footer">
+        <div style="font-weight: bold; margin: 10px 0;">${isKitchen ? 'طلب جديد - يرجى التحضير' : (settings.invoiceFooter || 'شكراً لزيارتكم')}</div>
+        <div style="font-size: 10pt; color: #777;">${new Date().toLocaleString('ar-IQ')}</div>
+    </div>
+</body>
+</html>`;
+    
+    return html;
 }

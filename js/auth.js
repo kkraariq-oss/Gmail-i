@@ -65,6 +65,8 @@ function applyPermissions() {
 
 // معالجة نموذج تسجيل الدخول
 document.addEventListener('DOMContentLoaded', () => {
+    // تأكيد توفر showNotification من app.js
+    const showNotification = window.showNotification;
     const loginForm = document.getElementById('loginForm');
     const loginScreen = document.getElementById('loginScreen');
     const dashboard = document.getElementById('dashboard');

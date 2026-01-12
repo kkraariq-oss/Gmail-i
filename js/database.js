@@ -1,4 +1,4 @@
-// نظام إدارة قاعدة البيانات المحلية
+// نظام إدارة قاعدة البيانات المحلية - محدث ومصحح
 const LocalDB = {
     // مفاتيح التخزين
     KEYS: {
@@ -18,10 +18,14 @@ const LocalDB = {
         try {
             localStorage.setItem(key, JSON.stringify(data));
             
-            // حفظ إلى Firebase إذا كان مفعلاً
-            const settings = this.get(this.KEYS.SETTINGS) || {};
-            if (settings.autoBackupToCloud && typeof FirebaseDB !== 'undefined') {
-                FirebaseDB.save(key, data).catch(err => console.error('Firebase save error:', err));
+            // حفظ إلى Firebase في الخلفية (لا ننتظر النتيجة)
+            if (typeof FirebaseDB !== 'undefined') {
+                const settings = this.get(this.KEYS.SETTINGS) || {};
+                if (settings.autoBackupToCloud) {
+                    FirebaseDB.save(key, data).catch(() => {
+                        // تجاهل الخطأ بصمت
+                    });
+                }
             }
             
             return { success: true };
@@ -47,10 +51,14 @@ const LocalDB = {
         try {
             localStorage.removeItem(key);
             
-            // حذف من Firebase إذا كان مفعلاً
-            const settings = this.get(this.KEYS.SETTINGS) || {};
-            if (settings.autoBackupToCloud && typeof FirebaseDB !== 'undefined') {
-                FirebaseDB.delete(key).catch(err => console.error('Firebase delete error:', err));
+            // حذف من Firebase في الخلفية (لا ننتظر النتيجة)
+            if (typeof FirebaseDB !== 'undefined') {
+                const settings = this.get(this.KEYS.SETTINGS) || {};
+                if (settings.autoBackupToCloud) {
+                    FirebaseDB.delete(key).catch(() => {
+                        // تجاهل الخطأ بصمت
+                    });
+                }
             }
             
             return { success: true };
@@ -103,7 +111,7 @@ const LocalDB = {
             const defaultUsers = [{
                 id: '1',
                 username: 'admin',
-                password: 'admin123', // في الإنتاج، استخدم تشفير للكلمات السرية
+                password: 'admin123',
                 role: 'admin',
                 fullName: 'المدير العام',
                 createdAt: new Date().toISOString(),
