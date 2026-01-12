@@ -9,6 +9,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- إطار النافذة المخصص للإلكترون -->
+    <div id="customTitleBar" class="custom-title-bar">
+        <div class="title-bar-left">
+            <span class="app-icon"><i class="fas fa-utensils"></i></span>
+            <span class="app-title">نظام إدارة المطعم</span>
+        </div>
+        <div class="title-bar-center">
+            <!-- فارغ أو يمكن وضع عنوان التطبيق فقط -->
+        </div>
+        <div class="title-bar-right">
+            <button id="homeBtn" class="title-btn" title="الصفحة الرئيسية">
+                <i class="fas fa-home"></i>
+            </button>
+            <button id="refreshBtn" class="title-btn" title="تحديث">
+                <i class="fas fa-rotate-right"></i>
+            </button>
+            <button id="minimizeBtn" class="title-btn" title="تصغير">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button id="maximizeBtn" class="title-btn" title="تكبير/استعادة">
+                <i class="fas fa-square"></i>
+            </button>
+            <button id="closeBtn" class="title-btn close-btn" title="إغلاق">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
@@ -198,9 +226,11 @@
 
     <!-- تحميل السكربتات -->
     <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/database.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/print.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/pos.js"></script>
     <script src="js/products.js"></script>
     <script src="js/employees.js"></script>
@@ -210,6 +240,5 @@
     <script src="js/backup.js"></script>
     <script src="js/security.js"></script>
     <script src="js/settings.js"></script>
-    <script src="js/print.js"></script>
 </body>
 </html>
