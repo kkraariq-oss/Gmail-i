@@ -1,0 +1,219 @@
+/* نظام الثيمات - الوضع الليلي والنهاري */
+
+:root {
+    --transition-speed: 0.3s;
+}
+
+/* المتغيرات للوضع النهاري */
+.light-theme {
+    --bg-primary: #f5f6fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #fafbfc;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-tertiary: #95a5a6;
+    --border-color: #e1e8ed;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-danger: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --gradient-warning: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* المتغيرات للوضع الليلي */
+.dark-theme {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --text-primary: #eaeaea;
+    --text-secondary: #b8b8b8;
+    --text-tertiary: #888888;
+    --border-color: #2a3f5f;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-danger: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --gradient-warning: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+/* إطار النافذة المخصص */
+.custom-titlebar {
+    height: 70px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    -webkit-app-region: drag;
+    user-select: none;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-speed) ease;
+}
+
+.titlebar-drag-region {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    padding: 0 15px;
+}
+
+.titlebar-left,
+.titlebar-center,
+.titlebar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    -webkit-app-region: no-drag;
+}
+
+.app-icon {
+    font-size: 32px;
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.app-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sub-title {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.company-contact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-tertiary);
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: all var(--transition-speed) ease;
+}
+
+.phone-number {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    direction: ltr;
+}
+
+.whatsapp-btn-title {
+    background: #25D366;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.whatsapp-btn-title:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.theme-toggle {
+    background: var(--gradient-primary);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    font-size: 16px;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05) rotate(20deg);
+    box-shadow: var(--shadow-md);
+}
+
+.titlebar-button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.titlebar-button:hover {
+    background: var(--bg-tertiary);
+}
+
+.titlebar-button.close-btn:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* تحسينات البطاقات */
+.card,
+.section-card-modern,
+.stat-card-modern {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-speed) ease;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.form-control,
+select,
+input,
+textarea {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+table {
+    background: var(--bg-secondary);
+}
+
+thead {
+    background: var(--gradient-primary);
+}
+
+tbody tr {
+    border-bottom-color: var(--border-color);
+}
+
+tbody tr:hover {
+    background: var(--bg-tertiary);
+}

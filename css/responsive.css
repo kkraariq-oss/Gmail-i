@@ -1,8 +1,11 @@
 /* ======================================
-   Responsive Design - Mobile & Tablet
+   Responsive Design - المصلح والمحدث
    ====================================== */
 
-/* Mobile Header */
+/* ======================================
+   Header للموبايل
+   ====================================== */
+
 .mobile-header {
     position: fixed;
     top: 0;
@@ -13,6 +16,7 @@
     border-bottom: 1px solid var(--border-color);
     z-index: 1000;
     box-shadow: var(--shadow-sm);
+    display: none;
 }
 
 .mobile-header-content {
@@ -24,29 +28,35 @@
 }
 
 .menu-toggle {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border: none;
     background: transparent;
     color: var(--text-primary);
-    font-size: 20px;
+    font-size: 22px;
     cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    border-radius: 10px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .menu-toggle:active {
     background: var(--bg-tertiary);
+    transform: scale(0.95);
 }
 
 .header-brand {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    justify-content: center;
 }
 
 .brand-icon {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .brand-name {
@@ -63,44 +73,61 @@
 
 .theme-toggle-mobile,
 .whatsapp-btn-mobile {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 18px;
 }
 
 .theme-toggle-mobile {
     background: var(--gradient-primary);
     color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.theme-toggle-mobile:active {
+    transform: scale(0.9);
 }
 
 .whatsapp-btn-mobile {
     background: #25D366;
     color: white;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
 }
 
-/* Sidebar للموبايل */
+.whatsapp-btn-mobile:active {
+    transform: scale(0.9);
+}
+
+/* ======================================
+   Sidebar - القائمة الجانبية
+   ====================================== */
+
 .sidebar {
     position: fixed;
-    right: 0;
+    right: -100%;
     top: 0;
     width: 280px;
+    max-width: 85vw;
     height: 100vh;
     background: var(--bg-secondary);
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
+    transition: right 0.3s ease;
     z-index: 1001;
     overflow-y: auto;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    overflow-x: hidden;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar.active {
-    transform: translateX(0);
+    right: 0;
 }
 
 .sidebar-header {
@@ -109,6 +136,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .sidebar-brand {
@@ -118,35 +146,38 @@
 }
 
 .brand-icon-large {
-    font-size: 32px;
+    font-size: 36px;
 }
 
 .brand-text h3 {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
-    margin: 0;
+    margin: 0 0 2px 0;
 }
 
 .brand-text p {
     font-size: 11px;
     color: var(--text-secondary);
     margin: 0;
+    font-weight: 600;
 }
 
 .sidebar-close {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border: none;
     background: transparent;
     color: var(--text-primary);
-    font-size: 20px;
+    font-size: 22px;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 10px;
+    transition: var(--transition);
 }
 
 .sidebar-close:active {
     background: var(--bg-tertiary);
+    transform: scale(0.9);
 }
 
 .sidebar-user {
@@ -155,11 +186,13 @@
     align-items: center;
     gap: 12px;
     background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .user-avatar {
-    font-size: 40px;
-    color: var(--text-secondary);
+    font-size: 45px;
+    color: var(--primary);
 }
 
 .user-info {
@@ -168,39 +201,44 @@
 }
 
 .user-name {
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 800;
     color: var(--text-primary);
+    margin-bottom: 2px;
 }
 
 .user-role {
     font-size: 12px;
     color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .sidebar-nav {
     padding: 10px 0;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 20px;
+    padding: 14px 20px;
     color: var(--text-primary);
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     position: relative;
 }
 
 .nav-item i {
-    font-size: 18px;
+    font-size: 20px;
     width: 24px;
+    text-align: center;
 }
 
 .nav-item span:not(.badge) {
     flex: 1;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -209,30 +247,37 @@
     color: white;
 }
 
+.nav-item.active i,
+.nav-item.active span {
+    color: white;
+}
+
 .nav-item:not(.active):active {
     background: var(--bg-tertiary);
 }
 
 .nav-item .badge {
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 3px 10px;
+    border-radius: 12px;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .nav-item .badge.hot {
-    background: #ff6b6b;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
     color: white;
 }
 
 .nav-item .badge.admin {
-    background: #ffd93d;
+    background: linear-gradient(135deg, #ffd93d, #f2c94c);
     color: #333;
 }
 
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .theme-switcher {
@@ -241,198 +286,169 @@
 
 .theme-btn {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     border: none;
     background: var(--bg-tertiary);
     color: var(--text-primary);
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.theme-btn:active {
-    background: var(--bg-primary);
-}
-
-.company-info {
-    margin-bottom: 15px;
-}
-
-.phone-contact {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    direction: ltr;
-}
-
-.whatsapp-sidebar {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    background: #25D366;
-    color: white;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.whatsapp-sidebar:active {
-    transform: scale(0.95);
-}
-
-.logout-btn {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    background: var(--gradient-danger);
-    color: white;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    font-weight: 700;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.theme-btn:active {
+    background: var(--bg-primary);
+    transform: scale(0.98);
+}
+
+.theme-btn i {
+    font-size: 18px;
+}
+
+.company-info {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.phone-contact {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    direction: ltr;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.whatsapp-sidebar {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: #25D366;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.whatsapp-sidebar:active {
+    transform: scale(0.98);
+}
+
+.logout-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    background: var(--gradient-danger);
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    transition: var(--transition);
 }
 
 .logout-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
-/* Overlay */
+/* ======================================
+   Overlay
+   ====================================== */
+
 .overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 999;
     display: none;
+    backdrop-filter: blur(2px);
 }
 
 .overlay.active {
     display: block;
 }
 
-/* Main Content */
+/* ======================================
+   Main Content
+   ====================================== */
+
 .main-content {
-    padding: 20px;
-    transition: margin 0.3s ease;
-}
-
-/* شاشة التحميل */
-.loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gradient-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-}
-
-.loading-content {
-    text-align: center;
-    color: white;
-}
-
-.loader-logo {
-    font-size: 80px;
-    animation: bounce 1s infinite;
-    margin-bottom: 20px;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
-}
-
-.loading-content h2 {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.company-name {
-    font-size: 16px;
-    opacity: 0.9;
-    margin-bottom: 30px;
-}
-
-.loader-bar {
-    width: 200px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 0 auto 15px;
-}
-
-.loader-progress {
-    height: 100%;
-    background: white;
-    animation: progress 2s ease infinite;
-}
-
-@keyframes progress {
-    0% { width: 0%; }
-    50% { width: 70%; }
-    100% { width: 100%; }
-}
-
-.loading-text {
-    font-size: 14px;
-    opacity: 0.8;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    transition: var(--transition);
 }
 
 /* ======================================
    Media Queries
    ====================================== */
 
-/* Desktop (1024px+) */
-@media (min-width: 1024px) {
+/* Mobile Portrait & Landscape (< 768px) */
+@media (max-width: 767px) {
     .mobile-header {
-        display: none !important;
-    }
-    
-    .sidebar {
-        transform: translateX(0);
-        width: 260px;
-        position: relative;
-        height: 100vh;
-        position: fixed;
-    }
-    
-    .sidebar-close {
-        display: none;
+        display: block !important;
     }
     
     .main-content {
-        margin-right: 260px;
-        padding: 30px;
+        padding-top: 60px !important;
     }
     
-    .overlay {
-        display: none !important;
+    .sidebar {
+        right: -100%;
     }
     
-    .menu-toggle {
-        display: none;
+    .sidebar.active {
+        right: 0;
     }
     
-    .dashboard {
-        display: flex !important;
+    .page {
+        padding: 15px !important;
+    }
+    
+    .page-header-modern {
+        margin-bottom: 20px;
+    }
+    
+    .header-content h2 {
+        font-size: 22px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .sections-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .stat-card {
+        padding: 18px;
+    }
+    
+    .section-card {
+        padding: 20px;
     }
 }
 
@@ -443,161 +459,118 @@
     }
     
     .main-content {
-        margin-top: 60px;
-        padding: 25px;
+        padding-top: 60px !important;
     }
     
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-    
-    .sections-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+    .sidebar {
+        width: 300px;
     }
 }
 
-/* Mobile (< 768px) */
-@media (max-width: 767px) {
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
     .mobile-header {
-        display: block !important;
+        display: none !important;
+    }
+    
+    .sidebar {
+        right: 0 !important;
+        width: 260px;
+        position: fixed;
+        box-shadow: none;
+        border-left: 1px solid var(--border-color);
+    }
+    
+    .sidebar-close {
+        display: none;
     }
     
     .main-content {
-        margin-top: 60px;
-        padding: 15px;
+        margin-right: 260px;
+        padding-top: 0 !important;
     }
     
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+    .overlay {
+        display: none !important;
     }
     
-    .sections-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .page-header-modern {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .login-card {
-        padding: 30px 20px;
-        margin: 15px;
-    }
-    
-    .login-logo h1 {
-        font-size: 22px;
-    }
-    
-    .company-subtitle {
-        font-size: 12px;
-    }
-    
-    /* تصغير الأزرار */
-    .btn-login-modern {
-        padding: 14px;
-        font-size: 15px;
-    }
-    
-    /* تصغير حقول الإدخال */
-    .form-control-modern {
-        padding: 12px 12px 12px 45px;
-        font-size: 14px;
-    }
-    
-    /* تصغير بطاقات الإحصائيات */
-    .stat-card {
-        padding: 20px;
-    }
-    
-    .stat-icon {
-        font-size: 32px;
-        width: 60px;
-        height: 60px;
-    }
-    
-    .stat-value {
-        font-size: 22px;
-    }
-    
-    /* تصغير بطاقات الأقسام */
-    .section-card {
-        padding: 20px;
-    }
-    
-    .section-icon {
-        font-size: 36px;
-        margin-bottom: 12px;
-    }
-    
-    .section-card h4 {
-        font-size: 16px;
-    }
-    
-    .section-card p {
-        font-size: 13px;
+    .dashboard {
+        display: flex !important;
+        flex-direction: row-reverse;
     }
 }
 
-/* Mobile صغير جداً (< 375px) */
+/* Mobile Small (< 375px) */
 @media (max-width: 374px) {
     .brand-name {
         font-size: 12px;
     }
     
     .header-actions button {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
     }
     
-    .main-content {
-        padding: 10px;
+    .menu-toggle {
+        width: 40px;
+        height: 40px;
     }
     
-    .login-card {
-        padding: 25px 15px;
+    .page {
+        padding: 12px !important;
     }
     
     .stat-card {
         padding: 15px;
     }
     
-    .section-card {
-        padding: 15px;
-    }
-}
-
-/* Landscape Mode للموبايل */
-@media (max-height: 500px) and (orientation: landscape) {
-    .login-logo {
-        margin-bottom: 20px;
-    }
-    
-    .logo-circle {
-        width: 60px;
-        height: 60px;
-        font-size: 30px;
-    }
-    
-    .login-logo h1 {
+    .stat-icon {
+        width: 50px;
+        height: 50px;
         font-size: 20px;
     }
     
-    .form-group-modern {
-        margin-bottom: 15px;
+    .stat-value {
+        font-size: 20px;
+    }
+    
+    .section-card {
+        padding: 18px;
+    }
+    
+    .section-icon {
+        font-size: 40px;
     }
 }
 
-/* Print Styles */
+/* Landscape على الموبايل */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar-user {
+        padding: 12px 20px;
+    }
+    
+    .user-avatar {
+        font-size: 35px;
+    }
+    
+    .nav-item {
+        padding: 10px 20px;
+    }
+    
+    .sidebar-footer {
+        padding: 15px 20px;
+    }
+}
+
+/* Print */
 @media print {
     .mobile-header,
     .sidebar,
     .overlay,
-    .notification {
+    .notification,
+    .whatsapp-btn-mobile,
+    .theme-toggle-mobile {
         display: none !important;
     }
     
@@ -605,9 +578,13 @@
         margin: 0 !important;
         padding: 0 !important;
     }
+    
+    .page {
+        padding: 20px !important;
+    }
 }
 
-/* Dark Mode في الموبايل */
+/* Dark Theme في الموبايل */
 .dark-theme .mobile-header {
     background: var(--bg-secondary);
     border-bottom-color: var(--border-color);
@@ -618,5 +595,5 @@
 }
 
 .dark-theme .overlay {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
 }
