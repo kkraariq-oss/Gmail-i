@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قالب الطباعة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            padding: 10px;
+        }
+        
+        .print-container {
+            width: 80mm;
+            margin: 0 auto;
+        }
+        
+        @media print {
+            body {
+                width: 80mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container" id="printContent"></div>
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        ipcRenderer.on('print-data', (event, data) => {
+            document.getElementById('printContent').innerHTML = data;
+        });
+    </script>
+</body>
+</html>
